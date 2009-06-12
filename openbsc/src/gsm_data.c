@@ -153,7 +153,8 @@ struct gsm_bts *gsm_bts_alloc(struct gsm_network *net, enum gsm_bts_type type,
 }
 
 struct gsm_network *gsm_network_init(u_int16_t country_code, u_int16_t network_code,
-				     int (*mncc_recv)(struct gsm_network *, int, void *))
+				     int (*mncc_recv)(struct gsm_network *, int, void *),
+				     gsm_layer3_cb *layer3_cb, void *layer3_data)
 {
 	struct gsm_network *net;
 
@@ -171,6 +172,8 @@ struct gsm_network *gsm_network_init(u_int16_t country_code, u_int16_t network_c
 	INIT_LLIST_HEAD(&net->bts_list);
 
 	net->mncc_recv = mncc_recv;
+	net->gsm_layer3 = layer3_cb;
+	net->gsm_layer3_data = layer3_data;
 
 	return net;
 }

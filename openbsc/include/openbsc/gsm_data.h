@@ -70,6 +70,12 @@ typedef int gsm_cbfn(unsigned int hooknum,
 		     struct msgb *msg,
 		     void *data, void *param);
 
+/**
+ * layer3 callback. Coming from libbsc.a and can be
+ * implemented in a msc or such.
+ */
+typedef int gsm_layer3_cb(struct msgb *msg, void *data);
+
 /*
  * Use the channel. As side effect the lchannel recycle timer
  * will be started.
@@ -372,6 +378,10 @@ struct gsm_network {
 
 	unsigned int num_bts;
 	struct llist_head bts_list;
+
+	/* some callbacks */
+	gsm_layer3_cb *gsm_layer3;
+	void *gsm_layer3_data;
 };
 
 #define SMS_HDR_SIZE	128
@@ -386,8 +396,10 @@ struct gsm_sms {
 };
 
 struct gsm_network *gsm_network_init(u_int16_t country_code, u_int16_t network_code,
-				     int (*mncc_recv)(struct gsm_network *, int, void *));
+				     int (*mncc_recv)(struct gsm_network *, int, void *),
+				     gsm_layer3_cb *layer3_cb, void *layer3_data);
 struct gsm_bts *gsm_bts_alloc(struct gsm_network *net, enum gsm_bts_type type,
+
 			      u_int8_t tsc, u_int8_t bsic);
 struct gsm_bts_trx *gsm_bts_trx_alloc(struct gsm_bts *bts);
 

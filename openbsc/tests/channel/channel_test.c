@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 	printf("Testing the gsm_subscriber chan logic\n");
 
 	/* Create a dummy network */
-	network = gsm_network_init(1, 1, NULL);
+	network = gsm_network_init(1, 1, NULL, NULL, NULL);
 	if (!network)
 		exit(1);
 	bts = gsm_bts_alloc(network, GSM_BTS_TYPE_BS11, 0, 0);

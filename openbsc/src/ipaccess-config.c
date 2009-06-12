@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 
-	gsmnet = gsm_network_init(1, 1, NULL);
+	gsmnet = gsm_network_init(1, 1, NULL, NULL, NULL);
 	if (!gsmnet)
 		exit(1);
 

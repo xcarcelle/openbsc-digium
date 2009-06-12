@@ -986,7 +986,7 @@ static int bootstrap_network(void)
 	}
 
 	/* initialize our data structures */
-	gsmnet = gsm_network_init(MCC, MNC, mncc_recv);
+	gsmnet = gsm_network_init(MCC, MNC, mncc_recv, NULL, NULL);
 	if (!gsmnet)
 		return -ENOMEM;
 
