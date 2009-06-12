@@ -149,6 +149,31 @@ struct gsm_subscriber *subscr_put(struct gsm_subscriber *subscr)
 	return NULL;
 }
 
+struct gsm_subscriber *subscr_find_by_tmsi(const char *tmsi)
+{
+	struct gsm_subscriber *subscr;
+
+	/* we might have a record in memory already */
+	llist_for_each_entry(subscr, &active_subscribers, entry) {
+		if (strcmp(subscr->tmsi, tmsi) == 0)
+			return subscr_get(subscr);
+	}
+
+	return NULL;
+}
+
+struct gsm_subscriber *subscr_find_by_imsi(const char *imsi)
+{
+	struct gsm_subscriber *subscr;
+
+	llist_for_each_entry(subscr, &active_subscribers, entry) {
+		if (strcmp(subscr->imsi, imsi) == 0)
+			return subscr_get(subscr);
+	}
+
+	return NULL;
+}
+
 void subscr_get_channel(struct gsm_subscriber *subscr,
 			struct gsm_network *network, int type,
 			gsm_cbfn *cbfn, void *param)
