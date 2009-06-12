@@ -30,4 +30,7 @@
 int gsm_7bit_decode(char *decoded, const u_int8_t *user_data, u_int8_t length);
 int gsm_7bit_encode(u_int8_t *result, const char *data);
 
+/* GSM 04.08 Mobile Identity conversion (10.5.1.4) */
+int gsm_mi_to_string(char *string, int str_len, u_int8_t *mi, int mi_len);
+
 #endif

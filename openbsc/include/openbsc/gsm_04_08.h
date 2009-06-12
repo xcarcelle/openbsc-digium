@@ -642,6 +642,11 @@ enum chreq_type {
 #define SBIT(a) (1 << a)
 #define ALL_STATES 0xffffffff
 
+#define GSM_MI_SIZE		32
+#define GSM_TMSI_LEN		5
+#define GSM_MID_TMSI_LEN	(GSM_TMSI_LEN + 2)
+
+
 struct msgb;
 struct gsm_bts;
 struct gsm_subscriber;

@@ -1,7 +1,7 @@
 /*
  * (C) 2008 by Daniel Willmann <daniel@totalueberwachung.de>
  * (C) 2009 by Holger Hans Peter Freyther <zecke@selfish.org>
- * (C) 2009 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2008-2009 by Harald Welte <laforge@gnumonks.org>
  *
  * All Rights Reserved
  *
@@ -22,7 +22,12 @@
  */
 
 #include <openbsc/gsm_utils.h>
+#include <openbsc/gsm_04_08.h>
+
+#include <netinet/in.h>
+
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* GSM 03.38 6.2.1 Charachter packing */
@@ -56,7 +61,7 @@ int gsm_7bit_encode(u_int8_t *result, const char *data)
 	for (i = 0; i < length; ++i) {
 		u_int8_t first  = (data[i] & 0x7f) << b_off;
 		u_int8_t second = (data[i] & 0x7f) >> (8 - b_off);
-    
+
 		result[d_off] |= first;
 		if (second != 0)
 			result[d_off + 1] = second;
@@ -71,3 +76,55 @@ int gsm_7bit_encode(u_int8_t *result, const char *data)
 
 	return out_length;
 }
+
+static char bcd2char(u_int8_t bcd)
+{
+	if (bcd < 0xa)
+		return '0' + bcd;
+	else
+		return 'A' + (bcd - 0xa);
+}
+
+/* Convert Mobile Identity (GSM 04.08 10.5.1.4) to string */
+int gsm_mi_to_string(char *string, int str_len, u_int8_t *mi, int mi_len)
+{
+	int i;
+	u_int8_t mi_type;
+	char *str_cur = string;
+	u_int32_t tmsi;
+
+	mi_type = mi[0] & GSM_MI_TYPE_MASK;
+
+	switch (mi_type) {
+	case GSM_MI_TYPE_NONE:
+		break;
+	case GSM_MI_TYPE_TMSI:
+		/* Table 10.5.4.3, reverse generate_mid_from_tmsi */
+		if (mi_len == GSM_TMSI_LEN && mi[0] == (0xf0 | GSM_MI_TYPE_TMSI)) {
+			memcpy(&tmsi, &mi[1], 4);
+			tmsi = ntohl(tmsi);
+			return snprintf(string, str_len, "%u", tmsi);
+		}
+		break;
+	case GSM_MI_TYPE_IMSI:
+	case GSM_MI_TYPE_IMEI:
+	case GSM_MI_TYPE_IMEISV:
+		*str_cur++ = bcd2char(mi[0] >> 4);
+
+                for (i = 1; i < mi_len; i++) {
+			if (str_cur + 2 >= string + str_len)
+				return str_cur - string;
+			*str_cur++ = bcd2char(mi[i] & 0xf);
+			/* skip last nibble in last input byte when GSM_EVEN */
+			if( (i != mi_len-1) || (mi[0] & GSM_MI_ODD))
+				*str_cur++ = bcd2char(mi[i] >> 4);
+		}
+		break;
+	default:
+		break;
+	}
+	*str_cur++ = '\0';
+
+	return str_cur - string;
+}
+
