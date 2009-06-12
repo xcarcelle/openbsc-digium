@@ -656,6 +656,11 @@ struct gsm_network;
 void gsm0408_allow_everyone(int allow);
 void gsm0408_set_reject_cause(int cause);
 
+/* interface for the MSC to submit things to lower layers */
+struct msgb *gsm48_msgb_alloc(void);
+int gsm48_sendmsg(struct msgb *msg);
+
+/* helper functions for the MSC bits */
 int gsm0408_rcvmsg(struct msgb *msg);
 void gsm0408_generate_lai(struct gsm48_loc_area_id *lai48, u_int16_t mcc, 
 		u_int16_t mnc, u_int16_t lac);
@@ -663,8 +668,6 @@ enum gsm_chan_t get_ctype_by_chreq(struct gsm_bts *bts, u_int8_t ra);
 enum gsm_chreq_reason_t get_reason_by_chreq(struct gsm_bts *bts, u_int8_t ra);
 
 int gsm48_tx_mm_info(struct gsm_lchan *lchan);
-struct msgb *gsm48_msgb_alloc(void);
-int gsm48_sendmsg(struct msgb *msg);
 int generate_mid_from_tmsi(u_int8_t *buf, u_int32_t tmsi);
 
 int gsm48_send_rr_release(struct gsm_lchan *lchan);
