@@ -1123,10 +1123,10 @@ static void handle_options(int argc, char** argv)
 			database_name = strdup(optarg);
 			break;
 		case 'a':
-			gsm0408_allow_everyone(1);
+			msc_loc_allow_everyone(1);
 			break;
 		case 'r':
-			gsm0408_set_reject_cause(atoi(optarg));
+			msc_loc_set_reject_cause(atoi(optarg));
 			break;
 		case 'p':
 			create_pcap_file(optarg);

@@ -27,4 +27,9 @@ struct msgb;
 
 int msc_layer3(struct msgb *msg, void *data);
 
+/* Configure general locationg updating request behavior */
+void msc_loc_allow_everyone(int allow);
+void msc_loc_set_reject_cause(int cause);
+
+
 #endif

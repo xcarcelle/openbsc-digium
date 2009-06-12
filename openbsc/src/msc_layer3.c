@@ -30,6 +30,9 @@
 
 #include <string.h>
 
+extern int msc_mm_rx_loc_upd_req(struct msgb *msg);
+extern int msc_mm_rx_id_resp(struct msgb *msg);
+extern int msc_mm_rx_imsi_detach_ind(struct msgb *msg);
 
 static int msc_rr_rx_pag_resp(struct msgb *msg)
 {
@@ -93,6 +96,40 @@ static int msc_rcv_rr(struct msgb *msg)
 	return rc;
 }
 
+/* Receive a GSM 04.08 Mobility Management (MM) message */
+static int msc_rcv_mm(struct msgb *msg)
+{
+	struct gsm48_hdr *gh = msgb_l3(msg);
+	int rc;
+
+	switch (gh->msg_type & 0xbf) {
+	case GSM48_MT_MM_LOC_UPD_REQUEST:
+		DEBUGP(DMM, "LOCATION UPDATING REQUEST: ");
+		rc = msc_mm_rx_loc_upd_req(msg);
+		break;
+	case GSM48_MT_MM_ID_RESP:
+		rc = msc_mm_rx_id_resp(msg);
+		break;
+	case GSM48_MT_MM_CM_SERV_REQ:
+		break;
+	case GSM48_MT_MM_STATUS:
+		break;
+	case GSM48_MT_MM_TMSI_REALL_COMPL:
+		break;
+	case GSM48_MT_MM_IMSI_DETACH_IND:
+		rc = msc_mm_rx_imsi_detach_ind(msg);
+		break;
+	case GSM48_MT_MM_CM_REEST_REQ:
+		break;
+	case GSM48_MT_MM_AUTH_RESP:
+		break;
+	default:
+		break;
+	}
+
+	return rc;
+}
+
 /*
  * GSM04.08 layer3 dispatch
  */
@@ -109,6 +146,7 @@ int msc_layer3(struct msgb *msg, void *data)
 	case GSM48_PDISC_CC:
 		break;
 	case GSM48_PDISC_MM:
+		rc = msc_rcv_mm(msg);
 		break;
 	case GSM48_PDISC_SMS:
 		break;

@@ -12,7 +12,7 @@ libbsc_a_SOURCES = abis_rsl.c abis_nm.c gsm_04_08.c gsm_data.c mncc.c \
 		input/misdn.c input/ipaccess.c signal.c gsm_utils.c talloc.c
 
 libmsc_a_SOURCES = gsm_subscriber.c db.c telnet_interface.c \
-		msc_layer3.c
+		msc_layer3.c msc_loc.c msc_mncc.c
 
 libvty_a_SOURCES = vty/buffer.c vty/command.c vty/vector.c vty/vty.c
 

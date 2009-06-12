@@ -652,10 +652,6 @@ struct gsm_bts;
 struct gsm_subscriber;
 struct gsm_network;
 
-/* config options controlling the behaviour of the lower leves */
-void gsm0408_allow_everyone(int allow);
-void gsm0408_set_reject_cause(int cause);
-
 /* interface for the MSC to submit things to lower layers */
 struct msgb *gsm48_msgb_alloc(void);
 int gsm48_sendmsg(struct msgb *msg);
