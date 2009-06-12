@@ -1516,7 +1516,11 @@ static int gsm0408_rcv_mm(struct msgb *msg)
 	return rc;
 }
 
-/* Receive a PAGING RESPONSE message from the MS */
+/*
+ * Receive a PAGING RESPONSE message from the MS. Inside the BSC
+ * we will only have to stop the paging as it was successful and
+ * event this is against the spec... see GSM 08.08 3.1.16.
+ */
 static int gsm48_rr_rx_pag_resp(struct msgb *msg)
 {
 	struct gsm48_hdr *gh = msgb_l3(msg);
@@ -1525,18 +1529,16 @@ static int gsm48_rr_rx_pag_resp(struct msgb *msg)
 	u_int8_t mi_type = mi_lv[1] & GSM_MI_TYPE_MASK;
 	char mi_string[GSM_MI_SIZE];
 	struct gsm_subscriber *subscr = NULL;
-	struct paging_signal_data sig_data;
-	int rc = 0;
 
 	gsm_mi_to_string(mi_string, sizeof(mi_string), mi_lv+1, *mi_lv);
 	DEBUGP(DRR, "PAGING RESPONSE: mi_type=0x%02x MI(%s)\n",
 		mi_type, mi_string);
 	switch (mi_type) {
 	case GSM_MI_TYPE_TMSI:
-		subscr = subscr_get_by_tmsi(mi_string);
+		subscr = subscr_find_by_tmsi(mi_string);
 		break;
 	case GSM_MI_TYPE_IMSI:
-		subscr = subscr_get_by_imsi(mi_string);
+		subscr = subscr_find_by_imsi(mi_string);
 		break;
 	}
 
@@ -1545,12 +1547,9 @@ static int gsm48_rr_rx_pag_resp(struct msgb *msg)
 		/* FIXME: request id? close channel? */
 		return -EINVAL;
 	}
+
 	DEBUGP(DRR, "<- Channel was requested by %s\n",
 		subscr->name ? subscr->name : subscr->imsi);
-
-	subscr->equipment.classmark2_len = *classmark2_lv;
-	memcpy(subscr->equipment.classmark2, classmark2_lv+1, *classmark2_lv);
-	db_sync_equipment(&subscr->equipment);
 
 	if (!msg->lchan->subscr) {
 		msg->lchan->subscr = subscr;
@@ -1564,19 +1563,9 @@ static int gsm48_rr_rx_pag_resp(struct msgb *msg)
 		subscr = msg->lchan->subscr;
 	}
 
-	sig_data.subscr = subscr;
-	sig_data.bts	= msg->lchan->ts->trx->bts;
-	sig_data.lchan	= msg->lchan;
-
-	dispatch_signal(SS_PAGING, S_PAGING_COMPLETED, &sig_data);
-
 	/* Stop paging on the bts we received the paging response */
 	paging_request_stop(msg->trx->bts, subscr, msg->lchan);
-
-	/* FIXME: somehow signal the completion of the PAGING to
-	 * the entity that requested the paging */
-
-	return rc;
+	return 0;
 }
 
 static int gsm48_rx_rr_classmark(struct msgb *msg)
