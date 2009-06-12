@@ -48,6 +48,7 @@
 #include <openbsc/e1_input.h>
 #include <openbsc/signal.h>
 #include <openbsc/talloc.h>
+#include <openbsc/msc.h>
 
 /* global pointer to the gsm network data structure */
 static struct gsm_network *gsmnet;
@@ -986,7 +987,7 @@ static int bootstrap_network(void)
 	}
 
 	/* initialize our data structures */
-	gsmnet = gsm_network_init(MCC, MNC, mncc_recv, NULL, NULL);
+	gsmnet = gsm_network_init(MCC, MNC, mncc_recv, msc_layer3, NULL);
 	if (!gsmnet)
 		return -ENOMEM;
 

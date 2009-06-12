@@ -3673,6 +3673,8 @@ static int gsm0408_rcv_cc(struct msgb *msg)
 /* here we pass in a msgb from the RSL->RLL.  We expect the l3 pointer to be set */
 int gsm0408_rcvmsg(struct msgb *msg)
 {
+	struct gsm_network *network = msg->trx->bts->network;
+
 	struct gsm48_hdr *gh = msgb_l3(msg);
 	u_int8_t pdisc = gh->proto_discr & 0x0f;
 	int rc = 0;
@@ -3700,6 +3702,9 @@ int gsm0408_rcvmsg(struct msgb *msg)
 			pdisc);
 		break;
 	}
+
+	if (network->gsm_layer3)
+		network->gsm_layer3(msg, network->gsm_layer3_data);
 
 	return rc;
 }
