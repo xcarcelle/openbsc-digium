@@ -5,14 +5,14 @@ sbin_PROGRAMS = bsc_hack bs11_config ipaccess-find ipaccess-config isdnsync
 noinst_LIBRARIES = libbsc.a libmsc.a libvty.a
 noinst_HEADERS = vty/cardshell.h
 
-libbsc_a_SOURCES = abis_rsl.c abis_nm.c gsm_04_08.c gsm_data.c mncc.c \
+libbsc_a_SOURCES = abis_rsl.c abis_nm.c gsm_04_08.c gsm_data.c \
 		msgb.c select.c chan_alloc.c timer.c debug.c \
 		gsm_subscriber_base.c gsm_04_11.c subchan_demux.c \
 		trau_frame.c trau_mux.c paging.c e1_config.c e1_input.c tlv_parser.c \
 		input/misdn.c input/ipaccess.c signal.c gsm_utils.c talloc.c
 
 libmsc_a_SOURCES = gsm_subscriber.c db.c telnet_interface.c \
-		msc_layer3.c msc_loc.c msc_mncc.c
+		msc_layer3.c msc_loc.c msc_mncc.c mncc.c
 
 libvty_a_SOURCES = vty/buffer.c vty/command.c vty/vector.c vty/vty.c
 

@@ -31,5 +31,8 @@ int msc_layer3(struct msgb *msg, void *data);
 void msc_loc_allow_everyone(int allow);
 void msc_loc_set_reject_cause(int cause);
 
+/* Call Control */
+int msc_rcv_cc(struct msgb *msg);
+
 
 #endif

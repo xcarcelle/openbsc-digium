@@ -668,6 +668,10 @@ int generate_mid_from_tmsi(u_int8_t *buf, u_int32_t tmsi);
 
 int gsm48_send_rr_release(struct gsm_lchan *lchan);
 
+int gsm48_tx_chan_mode_modify(struct gsm_lchan *lchan, u_int8_t mode);
+int gsm48_tx_simple(struct gsm_lchan *lchan,
+		    u_int8_t pdisc, u_int8_t msg_type);
+
 int bsc_upqueue(struct gsm_network *net);
 
 int mncc_send(struct gsm_network *net, int msg_type, void *arg);
@@ -677,5 +681,7 @@ int encode_bcd_number(u_int8_t *bcd_lv, u_int8_t max_len,
 		      int h_len, const char *input);
 int decode_bcd_number(char *output, int output_len, const u_int8_t *bcd_lv,
 		      int h_len);
+
+const char* gsm48_cc_msg_name(u_int8_t cause);
 
 #endif

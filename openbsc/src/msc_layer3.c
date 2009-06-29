@@ -144,6 +144,7 @@ int msc_layer3(struct msgb *msg, void *data)
 		rc = msc_rcv_rr(msg);
 		break;
 	case GSM48_PDISC_CC:
+		rc = msc_rcv_cc(msg);
 		break;
 	case GSM48_PDISC_MM:
 		rc = msc_rcv_mm(msg);
