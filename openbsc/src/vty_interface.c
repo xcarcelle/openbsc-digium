@@ -452,9 +452,9 @@ static void lchan_dump_vty(struct vty *vty, struct gsm_lchan *lchan)
 	vty_out(vty, "  Use Count: %u%s", lchan->use_count, VTY_NEWLINE);
 	vty_out(vty, "  BS Power %u, MS Power %u%s", lchan->bs_power,
 		lchan->ms_power, VTY_NEWLINE);
-	if (lchan->subscr) {
+	if (lchan->_subscr) {
 		vty_out(vty, "  Subscriber:%s", VTY_NEWLINE);
-		subscr_dump_vty(vty, lchan->subscr);
+		subscr_dump_vty(vty, lchan->_subscr);
 	} else
 		vty_out(vty, "  No Subscriber%s", VTY_NEWLINE);
 }

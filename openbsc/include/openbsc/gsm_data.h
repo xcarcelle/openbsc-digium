@@ -158,7 +158,7 @@ struct gsm_lchan {
 	} encr;
 	
 	/* To whom we are allocated at the moment */
-	struct gsm_subscriber *subscr;
+	struct gsm_subscriber *_subscr;
 
 	/* Timer started to release the channel */
 	struct timer_list release_timer;

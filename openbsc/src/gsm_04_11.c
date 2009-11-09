@@ -503,7 +503,7 @@ static int gsm340_rx_tpdu(struct msgb *msg)
 			sms_alphabet == DCS_7BIT_DEFAULT ? gsms->text : 
 				hexdump(gsms->user_data, gsms->user_data_len));
 
-	gsms->sender = subscr_get(msg->lchan->subscr);
+	gsms->sender = subscr_get(msg->lchan->_subscr);
 
 	gsms->validity_minutes = gsm340_validity_period(sms_vpf, sms_vp);
 
@@ -654,7 +654,7 @@ static int gsm411_rx_rp_ack(struct msgb *msg, struct gsm_trans *trans,
 	trans_free(trans);
 
 	/* check for more messages for this subscriber */
-	sms = db_sms_get_unsent_for_subscr(msg->lchan->subscr);
+	sms = db_sms_get_unsent_for_subscr(msg->lchan->_subscr);
 	if (sms)
 		gsm411_send_sms_lchan(msg->lchan, sms);
 	else
@@ -724,7 +724,7 @@ static int gsm411_rx_rp_smma(struct msgb *msg, struct gsm_trans *trans,
 	dispatch_signal(SS_SMS, S_SMS_SMMA, trans->subscr);
 
 	/* check for more messages for this subscriber */
-	sms = db_sms_get_unsent_for_subscr(msg->lchan->subscr);
+	sms = db_sms_get_unsent_for_subscr(msg->lchan->_subscr);
 	if (sms)
 		gsm411_send_sms_lchan(msg->lchan, sms);
 	else
@@ -811,16 +811,16 @@ int gsm0411_rcv_sms(struct msgb *msg, u_int8_t link_id)
 	struct gsm_trans *trans;
 	int rc = 0;
 
-	if (!lchan->subscr)
+	if (!lchan->_subscr)
 		return -EIO;
 		/* FIXME: send some error message */
 
 	DEBUGP(DSMS, "trans_id=%x ", gh->proto_discr >> 4);
-	trans = trans_find_by_id(lchan->subscr, GSM48_PDISC_SMS,
+	trans = trans_find_by_id(lchan->_subscr, GSM48_PDISC_SMS,
 				 transaction_id);
 	if (!trans) {
 		DEBUGPC(DSMS, "(unknown) ");
-		trans = trans_alloc(lchan->subscr, GSM48_PDISC_SMS,
+		trans = trans_alloc(lchan->_subscr, GSM48_PDISC_SMS,
 				    transaction_id, new_callref++);
 		if (!trans) {
 			DEBUGPC(DSMS, "No memory for trans\n");
@@ -921,7 +921,7 @@ int gsm411_send_sms_lchan(struct gsm_lchan *lchan, struct gsm_sms *sms)
 	DEBUGP(DSMS, "send_sms_lchan()\n");
 
 	/* FIXME: allocate transaction with message reference */
-	trans = trans_alloc(lchan->subscr, GSM48_PDISC_SMS,
+	trans = trans_alloc(lchan->_subscr, GSM48_PDISC_SMS,
 			    transaction_id, new_callref++);
 	if (!trans) {
 		DEBUGP(DSMS, "No memory for trans\n");

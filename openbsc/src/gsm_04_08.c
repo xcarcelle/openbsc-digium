@@ -292,16 +292,16 @@ static void allocate_loc_updating_req(struct gsm_lchan *lchan)
 
 static int gsm0408_authorize(struct gsm_lchan *lchan, struct msgb *msg)
 {
-	if (authorize_subscriber(lchan->loc_operation, lchan->subscr)) {
+	if (authorize_subscriber(lchan->loc_operation, lchan->_subscr)) {
 		int rc;
 
-		db_subscriber_alloc_tmsi(lchan->subscr);
+		db_subscriber_alloc_tmsi(lchan->_subscr);
 		release_loc_updating_req(lchan);
-		rc = gsm0408_loc_upd_acc(msg->lchan, lchan->subscr->tmsi);
+		rc = gsm0408_loc_upd_acc(msg->lchan, lchan->_subscr->tmsi);
 		/* call subscr_update after putting the loc_upd_acc
 		 * in the transmit queue, since S_SUBSCR_ATTACHED might
 		 * trigger further action like SMS delivery */
-		subscr_update(lchan->subscr, msg->trx->bts,
+		subscr_update(lchan->_subscr, msg->trx->bts,
 			      GSM_SUBSCRIBER_UPDATE_ATTACHED);
 		return rc;
 	}
@@ -957,9 +957,9 @@ static int mm_rx_id_resp(struct msgb *msg)
 	case GSM_MI_TYPE_IMEI:
 	case GSM_MI_TYPE_IMEISV:
 		/* update subscribe <-> IMEI mapping */
-		if (lchan->subscr) {
-			db_subscriber_assoc_imei(lchan->subscr, mi_string);
-			db_sync_equipment(&lchan->subscr->equipment);
+		if (lchan->_subscr) {
+			db_subscriber_assoc_imei(lchan->_subscr, mi_string);
+			db_sync_equipment(&lchan->_subscr->equipment);
 		}
 		if (lchan->loc_operation)
 			lchan->loc_operation->waiting_for_imei = 0;
@@ -1088,7 +1088,7 @@ static int mm_rx_loc_upd_req(struct msgb *msg)
 	if (rc != 0)
 		return -EINVAL;
 
-	lchan->subscr->equipment.classmark1 = lu->classmark1;
+	lchan->_subscr->equipment.classmark1 = lu->classmark1;
 
 	/* check if we can let the subscriber into our network immediately
 	 * or if we need to wait for identity responses. */
@@ -1413,8 +1413,8 @@ static int gsm0408_rcv_mm(struct msgb *msg)
 		break;
 	case GSM48_MT_MM_TMSI_REALL_COMPL:
 		DEBUGP(DMM, "TMSI Reallocation Completed. Subscriber: %s\n",
-		       msg->lchan->subscr ?
-				msg->lchan->subscr->imsi :
+		       msg->lchan->_subscr ?
+				msg->lchan->_subscr->imsi :
 				"unknown subscriber");
 		break;
 	case GSM48_MT_MM_IMSI_DETACH_IND:
@@ -1480,7 +1480,7 @@ static int gsm48_rx_rr_pag_resp(struct msgb *msg)
 static int gsm48_rx_rr_classmark(struct msgb *msg)
 {
 	struct gsm48_hdr *gh = msgb_l3(msg);
-	struct gsm_subscriber *subscr = msg->lchan->subscr;
+	struct gsm_subscriber *subscr = msg->lchan->_subscr;
 	unsigned int payload_len = msgb_l3len(msg) - sizeof(*gh);
 	u_int8_t cm2_len, cm3_len = 0;
 	u_int8_t *cm2, *cm3 = NULL;
@@ -1574,7 +1574,7 @@ static int gsm48_rx_rr_app_info(struct msgb *msg)
 	DEBUGP(DNM, "RX APPLICATION INFO id/flags=0x%02x apdu_len=%u apdu=%s",
 		apdu_id_flags, apdu_len, hexdump(apdu_data, apdu_len));
 
-	return db_apdu_blob_store(msg->lchan->subscr, apdu_id_flags, apdu_len, apdu_data);
+	return db_apdu_blob_store(msg->lchan->_subscr, apdu_id_flags, apdu_len, apdu_data);
 }
 
 
@@ -3357,7 +3357,7 @@ int mncc_send(struct gsm_network *net, int msg_type, void *arg)
 		"Received '%s' from MNCC in state %d (%s)\n",
 		lchan->ts->trx->bts->nr, lchan->ts->trx->nr, lchan->ts->nr,
 		trans->transaction_id,
-		(lchan->subscr)?(lchan->subscr->extension):"-",
+		(lchan->_subscr)?(lchan->_subscr->extension):"-",
 		get_mncc_name(msg_type), trans->cc.state,
 		cc_state_names[trans->cc.state]);
 
@@ -3446,12 +3446,12 @@ static int gsm0408_rcv_cc(struct msgb *msg)
 	}
 	
 	/* Find transaction */
-	trans = trans_find_by_id(lchan->subscr, GSM48_PDISC_CC, transaction_id);
+	trans = trans_find_by_id(lchan->_subscr, GSM48_PDISC_CC, transaction_id);
 
 	DEBUGP(DCC, "(bts %d trx %d ts %d ti %x sub %s) "
 		"Received '%s' from MS in state %d (%s)\n",
 		lchan->ts->trx->bts->nr, lchan->ts->trx->nr, lchan->ts->nr,
-		transaction_id, (lchan->subscr)?(lchan->subscr->extension):"-",
+		transaction_id, (lchan->_subscr)?(lchan->_subscr->extension):"-",
 		gsm0408_cc_msg_names[msg_type], trans?(trans->cc.state):0,
 		cc_state_names[trans?(trans->cc.state):0]);
 
@@ -3460,7 +3460,7 @@ static int gsm0408_rcv_cc(struct msgb *msg)
 		DEBUGP(DCC, "Unknown transaction ID %x, "
 			"creating new trans.\n", transaction_id);
 		/* Create transaction */
-		trans = trans_alloc(lchan->subscr, GSM48_PDISC_CC,
+		trans = trans_alloc(lchan->_subscr, GSM48_PDISC_CC,
 				    transaction_id, new_callref++);
 		if (!trans) {
 			DEBUGP(DCC, "No memory for trans.\n");

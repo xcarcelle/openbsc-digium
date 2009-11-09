@@ -228,9 +228,9 @@ struct gsm_lchan *lchan_alloc(struct gsm_bts *bts, enum gsm_chan_t type)
 void lchan_free(struct gsm_lchan *lchan)
 {
 	lchan->type = GSM_LCHAN_NONE;
-	if (lchan->subscr) {
-		subscr_put(lchan->subscr);
-		lchan->subscr = NULL;
+	if (lchan->_subscr) {
+		subscr_put(lchan->_subscr);
+		lchan->_subscr = NULL;
 	}
 
 	/* We might kill an active channel... */
@@ -254,7 +254,7 @@ int lchan_auto_release(struct gsm_lchan *lchan)
 	}
 
 	/* Assume we have GSM04.08 running and send a release */
-	if (lchan->subscr) {
+	if (lchan->_subscr) {
 		gsm48_send_rr_release(lchan);
 	}
 
@@ -286,7 +286,7 @@ struct gsm_lchan* lchan_find(struct gsm_bts *bts, struct gsm_subscriber *subscr)
 			for (lchan_no = 0; lchan_no < TS_MAX_LCHAN; ++lchan_no) {
 				struct gsm_lchan *lchan =
 					&trx->ts[ts_no].lchan[lchan_no];
-				if (subscr == lchan->subscr)
+				if (subscr == lchan->_subscr)
 					return lchan;
 			}
 		}
@@ -312,9 +312,9 @@ struct gsm_lchan *lchan_for_subscr(struct gsm_subscriber *subscr)
 
 int lchan_claim_channel(struct gsm_lchan *lchan, struct gsm_subscriber *subscr)
 {
-	if (!lchan->subscr) {
-		lchan->subscr = subscr_get(subscr);
-	} else if (lchan->subscr != subscr) {
+	if (!lchan->_subscr) {
+		lchan->_subscr = subscr_get(subscr);
+	} else if (lchan->_subscr != subscr) {
 		DEBUGP(DRR, "<- Channel already owned by someone else?\n");
 		return -1;
 	} else {

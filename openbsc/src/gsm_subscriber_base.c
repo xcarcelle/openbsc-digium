@@ -211,7 +211,7 @@ void subscr_put_channel(struct gsm_lchan *lchan)
 
 	put_lchan(lchan);
 
-	if (lchan->subscr && !llist_empty(&lchan->subscr->requests))
-		subscr_send_paging_request(lchan->subscr);
+	if (lchan->_subscr && !llist_empty(&lchan->_subscr->requests))
+		subscr_send_paging_request(lchan->_subscr);
 }
 
