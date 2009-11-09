@@ -89,6 +89,8 @@ static int subscr_paging_cb(unsigned int hooknum, unsigned int event,
 	request->cbfn(hooknum, event, msg, data, request->param);
 	subscr->in_callback = 0;
 
+	assert(subscr == request->subscr);
+	subscr_put(subscr);
 	talloc_free(request);
 	return 0;
 }
@@ -152,6 +154,7 @@ struct gsm_subscriber *subscr_put(struct gsm_subscriber *subscr)
 	return NULL;
 }
 
+/* refs the subscr, unref in subscr_paging_cb */
 void subscr_get_channel(struct gsm_subscriber *subscr,
 			int type, gsm_cbfn *cbfn, void *param)
 {
@@ -166,7 +169,7 @@ void subscr_get_channel(struct gsm_subscriber *subscr,
 	}
 
 	memset(request, 0, sizeof(*request));
-	request->subscr = subscr;
+	request->subscr = subscr_get(subscr);
 	request->channel_type = type;
 	request->cbfn = cbfn;
 	request->param = param;

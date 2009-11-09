@@ -48,6 +48,28 @@
 
 void *tall_paging_ctx;
 
+/* refs the subscriber */
+static struct gsm_paging_request *create_request(struct gsm_subscriber *subscr)
+{
+	struct gsm_paging_request *req;
+
+	req = talloc_zero(tall_paging_ctx, struct gsm_paging_request);
+	if (!req)
+		return NULL;
+
+	req->subscr = subscr_get(subscr);
+	return req;
+}
+
+/* unref the subscriber */
+static void destroy_request(struct gsm_paging_request *req)
+{
+	bsc_del_timer(&req->T3113);
+	llist_del(&req->entry);
+	subscr_put(req->subscr);
+	talloc_free(req);
+}
+
 static unsigned int calculate_group(struct gsm_bts *bts, struct gsm_subscriber *subscr)
 {
 	int ccch_conf;
@@ -78,10 +100,7 @@ static void paging_remove_request(struct gsm_bts_paging_state *paging_bts,
 			paging_bts->last_request = NULL;
 	}
 
-	bsc_del_timer(&to_be_deleted->T3113);
-	llist_del(&to_be_deleted->entry);
-	subscr_put(to_be_deleted->subscr);
-	talloc_free(to_be_deleted);
+	destroy_request(to_be_deleted);
 }
 
 static void page_ms(struct gsm_paging_request *request)
@@ -225,8 +244,11 @@ static int _paging_request(struct gsm_bts *bts, struct gsm_subscriber *subscr,
 
 	DEBUGP(DPAG, "Start paging of subscriber %llu on bts %d.\n",
 		subscr->id, bts->nr);
-	req = talloc_zero(tall_paging_ctx, struct gsm_paging_request);
-	req->subscr = subscr_get(subscr);
+
+	req = create_request(subscr);
+	if (!req)
+		return -1;
+
 	req->bts = bts;
 	req->chan_type = type;
 	req->cbfn = cbfn;

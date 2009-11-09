@@ -34,6 +34,7 @@
 #include <openbsc/transaction.h>
 #include <openbsc/paging.h>
 #include <openbsc/signal.h>
+#include <openbsc/chan_alloc.h>
 
 #define GSM48_ALLOC_SIZE	1024
 #define GSM48_ALLOC_HEADROOM	128
@@ -435,16 +436,8 @@ int gsm48_handle_paging_resp(struct msgb *msg, struct gsm_subscriber *subscr)
 	if (is_siemens_bts(bts))
 		send_siemens_mrpci(msg->lchan, classmark2_lv);
 
-	if (!msg->lchan->subscr) {
-		msg->lchan->subscr = subscr;
-	} else if (msg->lchan->subscr != subscr) {
-		DEBUGP(DRR, "<- Channel already owned by someone else?\n");
-		subscr_put(subscr);
+	if (lchan_claim_channel(msg->lchan, subscr) != 0) {
 		return -EINVAL;
-	} else {
-		DEBUGP(DRR, "<- Channel already owned by us\n");
-		subscr_put(subscr);
-		subscr = msg->lchan->subscr;
 	}
 
 	sig_data.subscr = subscr;

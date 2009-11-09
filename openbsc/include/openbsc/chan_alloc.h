@@ -49,4 +49,9 @@ void lchan_free(struct gsm_lchan *lchan);
 /* Consider releasing the channel */
 int lchan_auto_release(struct gsm_lchan *lchan);
 
+/* Claim a channel by a GSM subscriber:
+ *   - this adds the refcount
+ */
+int lchan_claim_channel(struct gsm_lchan *lchan, struct gsm_subscriber *subsr);
+
 #endif /* _CHAN_ALLOC_H */

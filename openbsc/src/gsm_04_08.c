@@ -933,6 +933,7 @@ static int mm_rx_id_resp(struct msgb *msg)
 	struct gsm_lchan *lchan = msg->lchan;
 	struct gsm_bts *bts = lchan->ts->trx->bts;
 	struct gsm_network *net = bts->network;
+	struct gsm_subscriber *subscr;
 	u_int8_t mi_type = gh->data[1] & GSM_MI_TYPE_MASK;
 	char mi_string[GSM48_MI_SIZE];
 
@@ -943,11 +944,13 @@ static int mm_rx_id_resp(struct msgb *msg)
 	switch (mi_type) {
 	case GSM_MI_TYPE_IMSI:
 		/* look up subscriber based on IMSI, create if not found */
-		if (!lchan->subscr) {
-			lchan->subscr = subscr_get_by_imsi(net, mi_string);
-			if (!lchan->subscr)
-				lchan->subscr = db_create_subscriber(net, mi_string);
-		}
+		subscr = subscr_get_by_imsi(net, mi_string);
+		if (!subscr)
+			subscr = db_create_subscriber(net, mi_string);
+
+		lchan_claim_channel(lchan, subscr);
+		subscr_put(subscr);
+
 		if (lchan->loc_operation)
 			lchan->loc_operation->waiting_for_imsi = 0;
 		break;
@@ -1079,7 +1082,12 @@ static int mm_rx_loc_upd_req(struct msgb *msg)
 		return -EINVAL;
 	}
 
-	lchan->subscr = subscr;
+	rc = lchan_claim_channel(lchan, subscr);
+	subscr_put(subscr);
+
+	if (rc != 0)
+		return -EINVAL;
+
 	lchan->subscr->equipment.classmark1 = lu->classmark1;
 
 	/* check if we can let the subscriber into our network immediately
@@ -1313,16 +1321,15 @@ static int gsm48_rx_mm_serv_req(struct msgb *msg)
 		return gsm48_tx_mm_serv_rej(msg->lchan,
 					    GSM48_REJECT_IMSI_UNKNOWN_IN_HLR);
 
-	if (!msg->lchan->subscr)
-		msg->lchan->subscr = subscr;
-	else if (msg->lchan->subscr != subscr) {
-		DEBUGP(DMM, "<- CM Channel already owned by someone else?\n");
+	if (lchan_claim_channel(msg->lchan, subscr) != 0) {
 		subscr_put(subscr);
+		return -EINVAL;
 	}
 
 	subscr->equipment.classmark2_len = classmark2_len;
 	memcpy(subscr->equipment.classmark2, classmark2, classmark2_len);
 	db_sync_equipment(&subscr->equipment);
+	subscr_put(subscr);
 
 	return gsm48_tx_mm_serv_ack(msg->lchan);
 }
@@ -1466,6 +1473,7 @@ static int gsm48_rx_rr_pag_resp(struct msgb *msg)
 	db_sync_equipment(&subscr->equipment);
 
 	rc = gsm48_handle_paging_resp(msg, subscr);
+	subscr_put(subscr);
 	return rc;
 }
 

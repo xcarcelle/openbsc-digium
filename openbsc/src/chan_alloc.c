@@ -279,7 +279,7 @@ static void auto_release_channel(void *_lchan)
 
 struct gsm_lchan* lchan_find(struct gsm_bts *bts, struct gsm_subscriber *subscr) {
 	struct gsm_bts_trx *trx;
-	int ts_no, lchan_no; 
+	int ts_no, lchan_no;
 
 	llist_for_each_entry(trx, &bts->trx_list, list) {
 		for (ts_no = 0; ts_no < 8; ++ts_no) {
@@ -308,4 +308,18 @@ struct gsm_lchan *lchan_for_subscr(struct gsm_subscriber *subscr)
 	}
 
 	return NULL;
+}
+
+int lchan_claim_channel(struct gsm_lchan *lchan, struct gsm_subscriber *subscr)
+{
+	if (!lchan->subscr) {
+		lchan->subscr = subscr_get(subscr);
+	} else if (lchan->subscr != subscr) {
+		DEBUGP(DRR, "<- Channel already owned by someone else?\n");
+		return -1;
+	} else {
+		DEBUGP(DRR, "<- Channel already owned by us\n");
+	}
+
+	return 0;
 }
