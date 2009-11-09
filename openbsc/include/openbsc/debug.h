@@ -31,9 +31,10 @@
 #define DEBUGP(ss, fmt, args...) debugp(ss, __FILE__, __LINE__, 0, fmt, ## args)
 #define DEBUGPC(ss, fmt, args...) debugp(ss, __FILE__, __LINE__, 1, fmt, ## args)
 #else
-#define DEBUGP(xss, fmt, args...) 
+#define DEBUGP(xss, fmt, args...)
 #define DEBUGPC(ss, fmt, args...)
 #endif
+
 
 #define static_assert(exp, name) typedef int dummy##name [(exp) ? 1 : -1];
 
@@ -45,8 +46,8 @@ void debug_timestamp(int enable);
 extern unsigned int debug_mask;
 
 /* new logging interface */
-#define LOGP(ss, level, fmt, args...) debugp(ss, __FILE__, __LINE__, 0, fmt, ##args)
-#define LOGPC(ss, level, fmt, args...) debugp(ss, __FILE__, __LINE__, 1, fmt, ##args)
+#define LOGP(ss, level, fmt, args...) debugp2(ss, level, __FILE__, __LINE__, 0, fmt, ##args)
+#define LOGPC(ss, level, fmt, args...) debugp2(ss, level, __FILE__, __LINE__, 1, fmt, ##args)
 
 /* different levels */
 #define LOGL_DEBUG	1	/* debugging information */
@@ -55,4 +56,42 @@ extern unsigned int debug_mask;
 #define LOGL_ERROR	7	/* error condition, requires user action */
 #define LOGL_FATAL	8	/* fatal, program aborted */
 
+/* context */
+#define BSC_CTX_LCHAN	"ctx-lchan"
+#define BSC_CTX_SUBSCR	"ctx-subscr"
+#define BSC_CTX_BTS	"ctx-bts"
+#define BSC_CTX_SCCP	"ctx-sccp"
+
+/* target */
+#define BSC_TGT_STDOUT	0
+#define BSC_TGT_SYSLOG	1
+#define BSC_TGT_VTY	2
+
+struct debug_target {
+	char *filter;
+
+	/* TODO: some multidimensional field of values */
+	int categories;
+
+	union {
+		struct {
+		} tgt_stdout;
+
+		struct {
+			int priority;
+		} tgt_syslog;
+
+		struct {
+			void *vty_connection;
+		} tgt_vty;
+	};
+};
+
+/* use the above macros */
+void debugp2(unsigned int subsys, unsigned int level, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 6, 7)));
+void debug_reset_context(void);
+void debug_add_target(struct debug_target *target);
+void debug_del_target(const struct debug_target *target);
+void debug_set_context(const char *ctx, void *value);
+void debug_set_filter(const char *filter_string);
 #endif /* _DEBUG_H */

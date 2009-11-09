@@ -191,8 +191,12 @@ int main(int argc, char **argv)
 	signal(SIGUSR1, &signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
+	/* example of a filter */
+	debug_set_filter("ctx-bts == BTS_STRING && ctx-subscr == imsi:NUMBER");
+
 	while (1) {
 		bsc_upqueue(bsc_gsmnet);
+		debug_reset_context();
 		bsc_select_main(0);
 	}
 }
