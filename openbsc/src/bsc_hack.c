@@ -38,6 +38,7 @@
 #include <openbsc/signal.h>
 
 /* MCC and MNC for the Location Area Identifier */
+static struct debug_target *stderr_target;
 struct gsm_network *bsc_gsmnet = 0;
 static const char *database_name = "hlr.sqlite3";
 static const char *config_file = "openbsc.cfg";
@@ -158,11 +159,14 @@ int main(int argc, char **argv)
 {
 	int rc;
 
+	debug_init();
 	tall_bsc_ctx = talloc_named_const(NULL, 1, "openbsc");
 	talloc_ctx_init();
 	on_dso_load_token();
 	on_dso_load_rrlp();
 	on_dso_load_ho_dec();
+	stderr_target = debug_target_create_stderr();
+        debug_add_target(stderr_target);
 
 	/* parse options */
 	handle_options(argc, argv);

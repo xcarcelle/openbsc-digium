@@ -1,6 +1,9 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
+#include <stdio.h>
+#include "linuxlist.h"
+
 #define DEBUG
 
 #define DRLL		0x0001
@@ -75,6 +78,7 @@ struct debug_target {
 
 	union {
 		struct {
+                        FILE *out;
 		} tgt_stdout;
 
 		struct {
@@ -85,13 +89,21 @@ struct debug_target {
 			void *vty_connection;
 		} tgt_vty;
 	};
+
+        void (*output) (struct debug_target *target, const char *string);
+
+        struct llist_head entry;
 };
 
 /* use the above macros */
 void debugp2(unsigned int subsys, unsigned int level, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 6, 7)));
 void debug_reset_context(void);
+void debug_init(void);
 void debug_add_target(struct debug_target *target);
-void debug_del_target(const struct debug_target *target);
+void debug_del_target(struct debug_target *target);
 void debug_set_context(const char *ctx, void *value);
 void debug_set_filter(const char *filter_string);
+
+struct debug_target *debug_target_create(void);
+struct debug_target *debug_target_create_stderr(void);
 #endif /* _DEBUG_H */

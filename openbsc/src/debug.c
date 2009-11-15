@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include <openbsc/debug.h>
+#include <openbsc/talloc.h>
 
 unsigned int debug_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
 
@@ -36,6 +37,9 @@ struct debug_info {
 	const char *description;
 	int number;
 };
+
+static void *tall_dbg_ctx = NULL;
+static LLIST_HEAD(target_list);
 
 #define DEBUG_CATEGORY(NUMBER, NAME, COLOR, DESCRIPTION) \
 	{ .name = NAME, .color = COLOR, .description = DESCRIPTION, .number = NUMBER },
@@ -102,7 +106,7 @@ void debug_parse_category_mask(const char *_mask)
 	debug_mask = new_mask;
 }
 
-const char* color(int subsys)
+static const char* color(int subsys)
 {
 	int i = 0;
 
@@ -117,13 +121,22 @@ const char* color(int subsys)
 static void _debugp(unsigned int subsys, int level, char *file, int line,
 		    int cont, const char *format, va_list ap)
 {
-	FILE *outfd = stderr;
+	struct debug_target *tar;
+	char col[30];
+	char sub[30];
+	char tim[30];
+	char buf[4096];
+	char final[4096];
 
 	if (!(debug_mask & subsys))
 		return;
 
-	fprintf(outfd, "%s", color(subsys));
+	/* prepare the data */
+	snprintf(col, sizeof(col), "%s", color(subsys));
+	vsnprintf(buf, sizeof(buf), format, ap);
 
+	tim[0] = '\0';
+	sub[0] = '\0';
 	if (!cont) {
 		if (print_timestamp) {
 			char *timestr;
@@ -131,14 +144,16 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 			tm = time(NULL);
 			timestr = ctime(&tm);
 			timestr[strlen(timestr)-1] = '\0';
-			fprintf(outfd, "%s ", timestr);
+			snprintf(tim, sizeof(tim), "%s ", timestr);
 		}
-		fprintf(outfd, "<%4.4x> %s:%d ", subsys, file, line);
+		snprintf(sub, sizeof(sub), "<%4.4x> %s:%d ", subsys, file, line);
 	}
-	vfprintf(outfd, format, ap);
-	fprintf(outfd, "\033[0;m");
 
-	fflush(outfd);
+	snprintf(final, sizeof(final), "%s%s%s%s\033[0;m", col, tim, sub, buf);
+
+	llist_for_each_entry(tar, &target_list, entry) {
+		tar->output(tar, final);
+	}
 }
 
 void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...)
@@ -177,10 +192,12 @@ void debug_reset_context(void)
 
 void debug_add_target(struct debug_target *target)
 {
+	llist_add_tail(&target->entry, &target_list);
 }
 
-void debug_del_target(const struct debug_target *target)
+void debug_del_target(struct debug_target *target)
 {
+	llist_del(&target->entry);
 }
 
 void debug_set_context(const char *ctx, void *value)
@@ -189,4 +206,40 @@ void debug_set_context(const char *ctx, void *value)
 
 void debug_set_filter(const char *filter_string)
 {
+}
+
+static void _stderr_output(struct debug_target *target, const char *log)
+{
+	fprintf(target->tgt_stdout.out, "%s", log);
+	fflush(target->tgt_stdout.out);
+}
+
+struct debug_target *debug_target_create(void)
+{
+	struct debug_target *target;
+
+	target = talloc_zero(tall_dbg_ctx, struct debug_target);
+	if (!target)
+		return NULL;
+
+	INIT_LLIST_HEAD(&target->entry);
+	return target;
+}
+
+struct debug_target *debug_target_create_stderr(void)
+{
+	struct debug_target *target;
+
+	target = debug_target_create();
+	if (!target)
+		return NULL;
+
+	target->tgt_stdout.out = stderr;
+	target->output = _stderr_output;
+	return target;
+}
+
+void debug_init(void)
+{
+	tall_dbg_ctx = talloc_named_const(NULL, 1, "debug");
 }
