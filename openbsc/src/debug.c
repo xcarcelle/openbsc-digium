@@ -28,6 +28,8 @@
 
 #include <openbsc/debug.h>
 #include <openbsc/talloc.h>
+#include <openbsc/gsm_data.h>
+#include <openbsc/gsm_subscriber.h>
 
 unsigned int debug_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
 
@@ -38,6 +40,13 @@ struct debug_info {
 	int number;
 };
 
+struct debug_context {
+	struct gsm_lchan *lchan;
+	struct gsm_subscriber *subscr;
+	struct gsm_bts *bts;
+};
+
+static struct debug_context debug_context;
 static void *tall_dbg_ctx = NULL;
 static LLIST_HEAD(target_list);
 
@@ -186,10 +195,6 @@ char *hexdump(const unsigned char *buf, int len)
 
 
 
-void debug_reset_context(void)
-{
-}
-
 void debug_add_target(struct debug_target *target)
 {
 	llist_add_tail(&target->entry, &target_list);
@@ -200,8 +205,29 @@ void debug_del_target(struct debug_target *target)
 	llist_del(&target->entry);
 }
 
-void debug_set_context(const char *ctx, void *value)
+void debug_reset_context(void)
 {
+	memset(&debug_context, 0, sizeof(debug_context));
+}
+
+/* currently we are not reffing these */
+void debug_set_context(int ctx, void *value)
+{
+	switch (ctx) {
+	case BSC_CTX_LCHAN:
+		debug_context.lchan = (struct gsm_lchan *) value;
+		break;
+	case BSC_CTX_SUBSCR:
+		debug_context.subscr = (struct gsm_subscriber *) value;
+		break;
+	case BSC_CTX_BTS:
+		debug_context.bts = (struct gsm_bts *) value;
+		break;
+	case BSC_CTX_SCCP:
+		break;
+	default:
+		break;
+	}
 }
 
 void debug_set_filter(const char *filter_string)

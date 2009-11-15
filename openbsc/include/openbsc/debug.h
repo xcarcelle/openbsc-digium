@@ -60,15 +60,12 @@ extern unsigned int debug_mask;
 #define LOGL_FATAL	8	/* fatal, program aborted */
 
 /* context */
-#define BSC_CTX_LCHAN	"ctx-lchan"
-#define BSC_CTX_SUBSCR	"ctx-subscr"
-#define BSC_CTX_BTS	"ctx-bts"
-#define BSC_CTX_SCCP	"ctx-sccp"
+#define BSC_CTX_LCHAN	0
+#define BSC_CTX_SUBSCR	1
+#define BSC_CTX_BTS	2
+#define BSC_CTX_SCCP	3
 
 /* target */
-#define BSC_TGT_STDOUT	0
-#define BSC_TGT_SYSLOG	1
-#define BSC_TGT_VTY	2
 
 struct debug_target {
 	char *filter;
@@ -101,7 +98,7 @@ void debug_reset_context(void);
 void debug_init(void);
 void debug_add_target(struct debug_target *target);
 void debug_del_target(struct debug_target *target);
-void debug_set_context(const char *ctx, void *value);
+void debug_set_context(int ctx, void *value);
 void debug_set_filter(const char *filter_string);
 
 struct debug_target *debug_target_create(void);
