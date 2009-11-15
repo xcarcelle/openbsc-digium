@@ -114,15 +114,13 @@ const char* color(int subsys)
 	return "";
 }
 
-void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...)
+static void _debugp(unsigned int subsys, int level, char *file, int line,
+		    int cont, const char *format, va_list ap)
 {
-	va_list ap;
 	FILE *outfd = stderr;
 
 	if (!(debug_mask & subsys))
 		return;
-
-	va_start(ap, format);
 
 	fprintf(outfd, "%s", color(subsys));
 
@@ -140,9 +138,16 @@ void debugp(unsigned int subsys, char *file, int line, int cont, const char *for
 	vfprintf(outfd, format, ap);
 	fprintf(outfd, "\033[0;m");
 
-	va_end(ap);
-
 	fflush(outfd);
+}
+
+void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...)
+{
+	va_list ap;
+
+	va_start(ap, format);
+        _debugp(subsys, BSC_LEGACY, file, line, cont, format, ap);
+        va_end(ap);
 }
 
 static char hexd_buff[4096];
@@ -164,3 +169,24 @@ char *hexdump(const unsigned char *buf, int len)
 	return hexd_buff;
 }
 
+
+
+void debug_reset_context(void)
+{
+}
+
+void debug_add_target(struct debug_target *target)
+{
+}
+
+void debug_del_target(const struct debug_target *target)
+{
+}
+
+void debug_set_context(const char *ctx, void *value)
+{
+}
+
+void debug_set_filter(const char *filter_string)
+{
+}
