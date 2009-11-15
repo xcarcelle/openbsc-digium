@@ -35,6 +35,7 @@
 #include <openbsc/gsm_utils.h>
 #include <openbsc/db.h>
 #include <openbsc/talloc.h>
+#include <openbsc/telnet_interface.h>
 
 static struct gsm_network *gsmnet;
 
@@ -761,6 +762,65 @@ DEFUN(show_paging,
 	return CMD_SUCCESS;
 }
 
+static void _vty_output(struct debug_target *tgt, const char *line)
+{
+	struct vty *vty = tgt->tgt_vty.vty;
+	vty_out(vty, "%s%s", line, VTY_NEWLINE);
+}
+
+struct debug_target *debug_target_create_vty(struct vty *vty)
+{
+	struct debug_target *target;
+
+	target = debug_target_create();
+	if (!target)
+		return NULL;
+
+	target->tgt_vty.vty = vty;
+	target->output = _vty_output;
+	return target;
+}
+
+DEFUN(enable_logging,
+      enable_logging_cmd,
+      "logging enable",
+      "Enables logging to this vty\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (conn->dbg) {
+		vty_out(vty, "Logging already enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	conn->dbg = debug_target_create_vty(vty);
+	if (!conn->dbg)
+		return CMD_WARNING;
+
+	debug_add_target(conn->dbg);
+	return CMD_SUCCESS;
+}
+
+DEFUN(diable_logging,
+      disable_logging_cmd,
+      "logging disable",
+      "Disables logging to this vty\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_del_target(conn->dbg);
+	talloc_free(conn->dbg);
+	conn->dbg = NULL;
+	return CMD_SUCCESS;
+}
+
 DEFUN(cfg_net,
       cfg_net_cmd,
       "network",
@@ -1435,6 +1495,9 @@ int bsc_vty_init(struct gsm_network *net)
 	install_element(VIEW_NODE, &show_e1ts_cmd);
 
 	install_element(VIEW_NODE, &show_paging_cmd);
+
+	install_element(VIEW_NODE, &enable_logging_cmd);
+	install_element(VIEW_NODE, &disable_logging_cmd);
 
 	install_element(CONFIG_NODE, &cfg_net_cmd);
 	install_node(&net_node, config_write_net);

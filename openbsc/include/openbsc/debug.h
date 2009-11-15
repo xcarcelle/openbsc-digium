@@ -83,7 +83,7 @@ struct debug_target {
 		} tgt_syslog;
 
 		struct {
-			void *vty_connection;
+			void *vty;
 		} tgt_vty;
 	};
 
