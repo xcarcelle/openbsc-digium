@@ -234,9 +234,9 @@ static void config_write_bts_single(struct vty *vty, struct gsm_bts *bts)
 	vty_out(vty, "  training_sequence_code %u%s", bts->tsc, VTY_NEWLINE);
 	vty_out(vty, "  base_station_id_code %u%s", bts->bsic, VTY_NEWLINE);
 	vty_out(vty, "  ms max power %u%s", bts->ms_max_power, VTY_NEWLINE);
-	if (bts->chan_desc.t3212)
+	if (bts->si_common.chan_desc.t3212)
 		vty_out(vty, "  periodic location update %u%s",
-			bts->chan_desc.t3212 * 10, VTY_NEWLINE);
+			bts->si_common.chan_desc.t3212 * 10, VTY_NEWLINE);
 	vty_out(vty, "  channel allocator %s%s",
 		bts->chan_alloc_reverse ? "descending" : "ascending",
 		VTY_NEWLINE);
@@ -365,24 +365,15 @@ DEFUN(show_trx,
 
 static void ts_dump_vty(struct vty *vty, struct gsm_bts_trx_ts *ts)
 {
-	struct in_addr ia;
-
 	vty_out(vty, "Timeslot %u of TRX %u in BTS %u, phys cfg %s%s",
 		ts->nr, ts->trx->nr, ts->trx->bts->nr,
 		gsm_pchan_name(ts->pchan), VTY_NEWLINE);
 	vty_out(vty, "  NM State: ");
 	net_dump_nmstate(vty, &ts->nm_state);
-	if (is_ipaccess_bts(ts->trx->bts)) {
-		ia.s_addr = ts->abis_ip.bound_ip;
-		vty_out(vty, "  Bound IP: %s Port %u RTP_TYPE2=%u CONN_ID=%u%s",
-			inet_ntoa(ia), ts->abis_ip.bound_port,
-			ts->abis_ip.rtp_payload2, ts->abis_ip.conn_id,
-			VTY_NEWLINE);
-	} else {
+	if (!is_ipaccess_bts(ts->trx->bts))
 		vty_out(vty, "  E1 Line %u, Timeslot %u, Subslot %u%s",
 			ts->e1_link.e1_nr, ts->e1_link.e1_ts,
 			ts->e1_link.e1_ts_ss, VTY_NEWLINE);
-	}
 }
 
 DEFUN(show_ts,
@@ -471,6 +462,14 @@ static void lchan_dump_vty(struct vty *vty, struct gsm_lchan *lchan)
 		subscr_dump_vty(vty, lchan->subscr);
 	} else
 		vty_out(vty, "  No Subscriber%s", VTY_NEWLINE);
+	if (is_ipaccess_bts(lchan->ts->trx->bts)) {
+		struct in_addr ia;
+		ia.s_addr = lchan->abis_ip.bound_ip;
+		vty_out(vty, "  Bound IP: %s Port %u RTP_TYPE2=%u CONN_ID=%u%s",
+			inet_ntoa(ia), lchan->abis_ip.bound_port,
+			lchan->abis_ip.rtp_payload2, lchan->abis_ip.conn_id,
+			VTY_NEWLINE);
+	}
 }
 
 #if 0
@@ -951,6 +950,7 @@ DEFUN(cfg_bts_lac,
 	return CMD_SUCCESS;
 }
 
+
 DEFUN(cfg_bts_tsc,
       cfg_bts_tsc_cmd,
       "training_sequence_code <0-255>",
@@ -1094,7 +1094,7 @@ DEFUN(cfg_bts_per_loc_upd, cfg_bts_per_loc_upd_cmd,
 {
 	struct gsm_bts *bts = vty->index;
 
-	bts->chan_desc.t3212 = atoi(argv[0]) / 10;
+	bts->si_common.chan_desc.t3212 = atoi(argv[0]) / 10;
 
 	return CMD_SUCCESS;
 }
