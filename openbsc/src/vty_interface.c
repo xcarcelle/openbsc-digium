@@ -802,6 +802,40 @@ DEFUN(enable_logging,
 	return CMD_SUCCESS;
 }
 
+DEFUN(logging_fltr_imsi,
+      logging_fltr_imsi_cmd,
+      "logging filter imsi IMSI",
+      "Print all messages related to a IMSI\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_imsi_filter(conn->dbg, argv[0]);
+	return CMD_SUCCESS;
+}
+
+DEFUN(logging_fltr_all,
+      logging_fltr_all_cmd,
+      "logging filter all [enable]",
+      "Print all messages to the console\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_all_filter(conn->dbg, atoi(argv[0]));
+	return CMD_SUCCESS;
+}
+
 DEFUN(diable_logging,
       disable_logging_cmd,
       "logging disable",
@@ -1498,6 +1532,8 @@ int bsc_vty_init(struct gsm_network *net)
 
 	install_element(VIEW_NODE, &enable_logging_cmd);
 	install_element(VIEW_NODE, &disable_logging_cmd);
+	install_element(VIEW_NODE, &logging_fltr_imsi_cmd);
+	install_element(VIEW_NODE, &logging_fltr_all_cmd);
 
 	install_element(CONFIG_NODE, &cfg_net_cmd);
 	install_node(&net_node, config_write_net);

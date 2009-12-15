@@ -67,8 +67,16 @@ extern unsigned int debug_mask;
 
 /* target */
 
+enum {
+	DEBUG_FILTER_IMSI = 1 << 0,
+	DEBUG_FILTER_ALL = 1 << 1,
+};
+
 struct debug_target {
 	char *filter;
+	int filter_map;
+	char *imsi_filter;
+
 
 	/* TODO: some multidimensional field of values */
 	int categories;
@@ -99,7 +107,12 @@ void debug_init(void);
 void debug_add_target(struct debug_target *target);
 void debug_del_target(struct debug_target *target);
 void debug_set_context(int ctx, void *value);
-void debug_set_filter(const char *filter_string);
+
+/* unify the various filter methods into one string parsing... */
+void debug_set_filter(struct debug_target *target, const char *filter_string);
+void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
+void debug_set_all_filter(struct debug_target *target, int);
+
 
 struct debug_target *debug_target_create(void);
 struct debug_target *debug_target_create_stderr(void);

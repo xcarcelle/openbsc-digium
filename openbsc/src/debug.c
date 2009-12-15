@@ -161,7 +161,16 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	snprintf(final, sizeof(final), "%s%s%s%s\033[0;m", col, tim, sub, buf);
 
 	llist_for_each_entry(tar, &target_list, entry) {
-		tar->output(tar, final);
+		/*
+		 * Apply filters here... if that becomes messy we will need to put
+		 * filters in a list and each filter will say stop, continue, output
+		 */
+		if ((tar->filter_map & DEBUG_FILTER_ALL) != 0) {
+			tar->output(tar, final);
+		} else if ((tar->filter_map & DEBUG_FILTER_IMSI) != 0
+			      && debug_context.subscr && strcmp(debug_context.subscr->imsi, tar->imsi_filter) == 0) {
+			tar->output(tar, final);
+		}
 	}
 }
 
@@ -230,8 +239,28 @@ void debug_set_context(int ctx, void *value)
 	}
 }
 
-void debug_set_filter(const char *filter_string)
+void debug_set_filter(struct debug_target *target, const char *filter_string)
 {
+}
+
+void debug_set_imsi_filter(struct debug_target *target, const char *imsi)
+{
+	if (imsi) {
+		target->filter_map |= DEBUG_FILTER_IMSI;
+		target->imsi_filter = talloc_strdup(target, imsi); 
+	} else if (target->imsi_filter) {
+		target->filter_map &= ~DEBUG_FILTER_IMSI;
+		talloc_free(target->imsi_filter);
+		target->imsi_filter = NULL;
+	}
+}
+
+void debug_set_all_filter(struct debug_target *target, int all)
+{
+	if (all)
+		target->filter_map |= DEBUG_FILTER_ALL;
+	else
+		target->filter_map &= ~DEBUG_FILTER_ALL;
 }
 
 static void _stderr_output(struct debug_target *target, const char *log)

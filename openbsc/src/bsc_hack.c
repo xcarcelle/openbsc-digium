@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 
 	/* example of a filter */
-	debug_set_filter("ctx-bts == BTS_STRING && ctx-subscr == imsi:NUMBER");
+	debug_set_all_filter(stderr_target, 1);
 
 	while (1) {
 		bsc_upqueue(bsc_gsmnet);
