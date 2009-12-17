@@ -821,7 +821,7 @@ DEFUN(logging_fltr_imsi,
 
 DEFUN(logging_fltr_all,
       logging_fltr_all_cmd,
-      "logging filter all [enable]",
+      "logging filter all <0-1>",
       "Print all messages to the console\n")
 {
 	struct telnet_connection *conn;
