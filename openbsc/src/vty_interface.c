@@ -765,7 +765,10 @@ DEFUN(show_paging,
 static void _vty_output(struct debug_target *tgt, const char *line)
 {
 	struct vty *vty = tgt->tgt_vty.vty;
-	vty_out(vty, "%s%s", line, VTY_NEWLINE);
+	vty_out(vty, "%s", line);
+	/* This is an ugly hack, but there is no easy way... */
+	if (strchr(line, '\n'))
+		vty_out(vty, "\r");
 }
 
 struct debug_target *debug_target_create_vty(struct vty *vty)
