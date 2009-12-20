@@ -46,7 +46,6 @@ void debugp(unsigned int subsys, char *file, int line, int cont, const char *for
 void debug_parse_category_mask(const char* mask);
 void debug_use_color(int use_color);
 void debug_timestamp(int enable);
-extern unsigned int debug_mask;
 
 /* new logging interface */
 #define LOGP(ss, level, fmt, args...) debugp2(ss, level, __FILE__, __LINE__, 0, fmt, ##args)
