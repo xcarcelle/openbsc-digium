@@ -95,7 +95,7 @@ void debug_timestamp(int enable)
  * Parse the category mask.
  * category1:category2:category3
  */
-void debug_parse_category_mask(const char *_mask)
+unsigned int debug_parse_category_mask(const char *_mask)
 {
 	unsigned int new_mask = 0;
 	int i = 0;
@@ -112,7 +112,7 @@ void debug_parse_category_mask(const char *_mask)
 
 
 	free(mask);
-	debug_mask = new_mask;
+	return new_mask;
 }
 
 static const char* color(int subsys)
@@ -263,6 +263,11 @@ void debug_set_all_filter(struct debug_target *target, int all)
 		target->filter_map &= ~DEBUG_FILTER_ALL;
 }
 
+void debug_set_debug_mask(struct debug_target *target, unsigned int mask)
+{
+	target->debug_mask = mask;
+}
+
 static void _stderr_output(struct debug_target *target, const char *log)
 {
 	fprintf(target->tgt_stdout.out, "%s", log);
@@ -278,6 +283,7 @@ struct debug_target *debug_target_create(void)
 		return NULL;
 
 	INIT_LLIST_HEAD(&target->entry);
+	target->debug_mask = debug_mask;
 	return target;
 }
 

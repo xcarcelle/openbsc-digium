@@ -109,7 +109,8 @@ static void handle_options(int argc, char** argv)
 			debug_use_color(0);
 			break;
 		case 'd':
-			debug_parse_category_mask(optarg);
+			debug_set_debug_mask(stderr_target,
+                                             debug_parse_category_mask(optarg));
 			break;
 		case 'l':
 			database_name = strdup(optarg);
@@ -195,7 +196,7 @@ int main(int argc, char **argv)
 	signal(SIGUSR1, &signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
-	/* example of a filter */
+	/* enable filters */
 	debug_set_all_filter(stderr_target, 1);
 
 	while (1) {

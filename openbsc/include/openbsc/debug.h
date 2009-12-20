@@ -43,7 +43,7 @@
 
 char *hexdump(const unsigned char *buf, int len);
 void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 5, 6)));
-void debug_parse_category_mask(const char* mask);
+unsigned int debug_parse_category_mask(const char* mask);
 void debug_use_color(int use_color);
 void debug_timestamp(int enable);
 
@@ -79,10 +79,11 @@ struct debug_target {
 
 	/* TODO: some multidimensional field of values */
 	int categories;
+	unsigned int debug_mask;
 
 	union {
 		struct {
-                        FILE *out;
+			FILE *out;
 		} tgt_stdout;
 
 		struct {
@@ -111,6 +112,8 @@ void debug_set_context(int ctx, void *value);
 void debug_set_filter(struct debug_target *target, const char *filter_string);
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
+
+void debug_set_debug_mask(struct debug_target *target, unsigned int);
 
 
 struct debug_target *debug_target_create(void);
