@@ -179,8 +179,8 @@ void debugp(unsigned int subsys, char *file, int line, int cont, const char *for
 	va_list ap;
 
 	va_start(ap, format);
-        _debugp(subsys, BSC_LEGACY, file, line, cont, format, ap);
-        va_end(ap);
+	_debugp(subsys, BSC_LEGACY, file, line, cont, format, ap);
+	va_end(ap);
 }
 
 static char hexd_buff[4096];

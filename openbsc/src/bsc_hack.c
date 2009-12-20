@@ -110,7 +110,7 @@ static void handle_options(int argc, char** argv)
 			break;
 		case 'd':
 			debug_set_debug_mask(stderr_target,
-                                             debug_parse_category_mask(optarg));
+					     debug_parse_category_mask(optarg));
 			break;
 		case 'l':
 			database_name = strdup(optarg);
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	on_dso_load_rrlp();
 	on_dso_load_ho_dec();
 	stderr_target = debug_target_create_stderr();
-        debug_add_target(stderr_target);
+	debug_add_target(stderr_target);
 
 	/* parse options */
 	handle_options(argc, argv);
