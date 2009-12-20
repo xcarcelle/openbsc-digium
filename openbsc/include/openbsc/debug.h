@@ -102,20 +102,22 @@ struct debug_target {
 
 /* use the above macros */
 void debugp2(unsigned int subsys, unsigned int level, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 6, 7)));
-void debug_reset_context(void);
 void debug_init(void);
-void debug_add_target(struct debug_target *target);
-void debug_del_target(struct debug_target *target);
+
+/* context management */
+void debug_reset_context(void);
 void debug_set_context(int ctx, void *value);
 
-/* unify the various filter methods into one string parsing... */
+/* filter on the targets */
 void debug_set_filter(struct debug_target *target, const char *filter_string);
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
-
 void debug_set_debug_mask(struct debug_target *target, unsigned int);
 
 
+/* management of the targets */
 struct debug_target *debug_target_create(void);
 struct debug_target *debug_target_create_stderr(void);
+void debug_add_target(struct debug_target *target);
+void debug_del_target(struct debug_target *target);
 #endif /* _DEBUG_H */
