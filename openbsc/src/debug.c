@@ -179,7 +179,16 @@ void debugp(unsigned int subsys, char *file, int line, int cont, const char *for
 	va_list ap;
 
 	va_start(ap, format);
-	_debugp(subsys, BSC_LEGACY, file, line, cont, format, ap);
+	_debugp(subsys, LOGL_DEBUG, file, line, cont, format, ap);
+	va_end(ap);
+}
+
+void debugp2(unsigned int subsys, unsigned int level, char *file, int line, int cont, const char *format, ...)
+{
+	va_list ap;
+
+	va_start(ap, format);
+	_debugp(subsys, level, file, line, cont, format, ap);
 	va_end(ap);
 }
 
