@@ -169,6 +169,9 @@ int main(int argc, char **argv)
 	stderr_target = debug_target_create_stderr();
 	debug_add_target(stderr_target);
 
+	/* enable filters */
+	debug_set_all_filter(stderr_target, 1);
+
 	/* parse options */
 	handle_options(argc, argv);
 
@@ -195,9 +198,6 @@ int main(int argc, char **argv)
 	signal(SIGABRT, &signal_handler);
 	signal(SIGUSR1, &signal_handler);
 	signal(SIGPIPE, SIG_IGN);
-
-	/* enable filters */
-	debug_set_all_filter(stderr_target, 1);
 
 	while (1) {
 		bsc_upqueue(bsc_gsmnet);
