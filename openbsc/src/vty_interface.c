@@ -886,7 +886,7 @@ DEFUN(logging_set_category_mask,
 		return CMD_WARNING;
 	}
 
-	debug_set_category_mask(conn->dbg, debug_parse_category_mask(argv[0]));
+	debug_parse_category_mask(conn->dbg, argv[0]);
 	return CMD_SUCCESS;
 }
 

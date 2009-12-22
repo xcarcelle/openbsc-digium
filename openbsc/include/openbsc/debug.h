@@ -6,29 +6,28 @@
 
 #define DEBUG
 
-#define DRLL		0x0001
-#define DCC		0x0002
-#define DMM		0x0004
-#define DRR		0x0008
-#define DRSL		0x0010
-#define DNM		0x0020
-
-#define DMNCC		0x0080
-#define DSMS		0x0100
-#define DPAG		0x0200
-#define DMEAS		0x0400
-
-#define DMI		0x1000
-#define DMIB		0x2000
-#define DMUX		0x4000
-#define DINP		0x8000
-
-#define DSCCP		0x10000
-#define DMSC		0x20000
-
-#define DMGCP		0x40000
-
-#define DHO		0x80000
+/* Debug Areas of the code */
+enum {
+	DRLL,
+	DCC,
+	DMM,
+	DRR,
+	DRSL,
+	DNM,
+	DMNCC,
+	DSMS,
+	DPAG,
+	DMEAS,
+	DMI,
+	DMIB,
+	DMUX,
+	DINP,
+	DSCCP,
+	DMSC,
+	DMGCP,
+	DHO,
+	Debug_LastEntry,
+};
 
 #ifdef DEBUG
 #define DEBUGP(ss, fmt, args...) debugp(ss, __FILE__, __LINE__, 0, fmt, ## args)
@@ -43,7 +42,6 @@
 
 char *hexdump(const unsigned char *buf, int len);
 void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 5, 6)));
-unsigned int debug_parse_category_mask(const char* mask);
 
 /* new logging interface */
 #define LOGP(ss, level, fmt, args...) debugp2(ss, level, __FILE__, __LINE__, 0, fmt, ##args)
@@ -69,14 +67,17 @@ enum {
 	DEBUG_FILTER_ALL = 1 << 1,
 };
 
+struct debug_category {
+	int enabled;
+	int loglevel;
+};
+
 struct debug_target {
 	int filter_map;
 	char *imsi_filter;
 
 
-	/* TODO: some multidimensional field of values */
-	int categories;
-	unsigned int category_mask;
+	struct debug_category categories[Debug_LastEntry];
 	int use_color;
 	int print_timestamp;
 	int loglevel;
@@ -111,10 +112,11 @@ void debug_set_context(int ctx, void *value);
 /* filter on the targets */
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
-void debug_set_category_mask(struct debug_target *target, unsigned int);
 void debug_set_use_color(struct debug_target *target, int);
 void debug_set_print_timestamp(struct debug_target *target, int);
 void debug_set_log_level(struct debug_target *target, int log_level);
+void debug_parse_category_mask(struct debug_target *target, const char* mask);
+void debug_set_category_filter(struct debug_target *target, int category, int enable, int level);
 
 
 /* management of the targets */

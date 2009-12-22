@@ -756,7 +756,7 @@ static void handle_options(int argc, char **argv)
 			serial_port = optarg;
 			break;
 		case 'b':
-			debug_set_category_mask(stderr_target, debug_parse_category_mask(optarg));
+			debug_parse_category_mask(stderr_target, optarg);
 			break;
 		case 's':
 			fname_software = optarg;

@@ -31,13 +31,34 @@
 #include <openbsc/gsm_data.h>
 #include <openbsc/gsm_subscriber.h>
 
-static unsigned int default_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
+/* default categories */
+static struct debug_category default_categories[Debug_LastEntry] = {
+    [DRLL]	= { .enabled = 1, .loglevel = 0},
+    [DCC]	= { .enabled = 1, .loglevel = 0},
+    [DMM]	= { .enabled = 1, .loglevel = 0},
+    [DRR]	= { .enabled = 1, .loglevel = 0},
+    [DRSL]	= { .enabled = 1, .loglevel = 0},
+    [DMM]	= { .enabled = 1, .loglevel = 0},
+    [DMNCC]	= { .enabled = 1, .loglevel = 0},
+    [DSMS]	= { .enabled = 1, .loglevel = 0},
+    [DPAG]	= { .enabled = 1, .loglevel = 0},
+    [DMEAS]	= { .enabled = 0, .loglevel = 0},
+    [DMI]	= { .enabled = 0, .loglevel = 0},
+    [DMIB]	= { .enabled = 0, .loglevel = 0},
+    [DMUX]	= { .enabled = 1, .loglevel = 0},
+    [DINP]	= { .enabled = 1, .loglevel = 0},
+    [DSCCP]	= { .enabled = 1, .loglevel = 0},
+    [DMSC]	= { .enabled = 1, .loglevel = 0},
+    [DMGCP]	= { .enabled = 1, .loglevel = 0},
+    [DHO]	= { .enabled = 1, .loglevel = 0},
+};
 
 struct debug_info {
 	const char *name;
 	const char *color;
 	const char *description;
 	int number;
+	int position;
 };
 
 struct debug_context {
@@ -76,26 +97,42 @@ static const struct debug_info debug_info[] = {
 
 /*
  * Parse the category mask.
- * category1:category2:category3
+ * The format can be this: category1:category2:category3
+ * or category1,2:category2,3:...
  */
-unsigned int debug_parse_category_mask(const char *_mask)
+void debug_parse_category_mask(struct debug_target* target, const char *_mask)
 {
-	unsigned int new_mask = 0;
 	int i = 0;
 	char *mask = strdup(_mask);
 	char *category_token = NULL;
 
+	/* Disable everything to enable it afterwards */
+	for (i = 0; i < ARRAY_SIZE(target->categories); ++i)
+		target->categories[i].enabled = 0;
+
 	category_token = strtok(mask, ":");
 	do {
 		for (i = 0; i < ARRAY_SIZE(debug_info); ++i) {
-			if (strcasecmp(debug_info[i].name, category_token) == 0)
-				new_mask |= debug_info[i].number;
+			char* colon = strstr(category_token, ",");
+			int length = strlen(category_token);
+
+			if (colon)
+			    length = colon - category_token;
+
+			if (strncasecmp(debug_info[i].name, category_token, length) == 0) {
+				int number = debug_info[i].number;
+				int level = 0;
+
+				if (colon)
+					level = atoi(colon+1);
+
+				target->categories[number].enabled = 1;
+				target->categories[number].loglevel = level;
+			}
 		}
 	} while ((category_token = strtok(NULL, ":")));
 
-
 	free(mask);
-	return new_mask;
 }
 
 static const char* color(int subsys)
@@ -153,14 +190,20 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	struct debug_target *tar;
 
 	llist_for_each_entry(tar, &target_list, entry) {
+		struct debug_category *category;
 		int output = 0;
 
+		category = &tar->categories[subsys];
 		/* subsystem is not supposed to be debugged */
-		if (!(tar->category_mask & subsys))
+		if (!category->enabled)
 			continue;
 
-		/* The message is not critical enough */
+		/* Check the global log level */
 		if (tar->loglevel != 0 && level < tar->loglevel)
+			continue;
+
+		/* Check the category log level */
+		if (category->loglevel != 0 && level < category->loglevel)
 			continue;
 
 		/*
@@ -273,11 +316,6 @@ void debug_set_all_filter(struct debug_target *target, int all)
 		target->filter_map &= ~DEBUG_FILTER_ALL;
 }
 
-void debug_set_category_mask(struct debug_target *target, unsigned int mask)
-{
-	target->category_mask = mask;
-}
-
 void debug_set_use_color(struct debug_target *target, int use_color)
 {
 	target->use_color = use_color;
@@ -291,6 +329,14 @@ void debug_set_print_timestamp(struct debug_target *target, int print_timestamp)
 void debug_set_log_level(struct debug_target *target, int log_level)
 {
 	target->loglevel = log_level;
+}
+
+void debug_set_category_filter(struct debug_target *target, int category, int enable, int level)
+{
+	if (category >= Debug_LastEntry)
+		return;
+	target->categories[category].enabled = !!enable;
+	target->categories[category].loglevel = level;
 }
 
 static void _stderr_output(struct debug_target *target, const char *log)
@@ -308,7 +354,7 @@ struct debug_target *debug_target_create(void)
 		return NULL;
 
 	INIT_LLIST_HEAD(&target->entry);
-	target->category_mask = default_mask;
+	memcpy(target->categories, default_categories, sizeof(default_categories));
 	target->use_color = 1;
 	target->print_timestamp = 0;
 	target->loglevel = 0;

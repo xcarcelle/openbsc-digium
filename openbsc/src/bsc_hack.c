@@ -109,8 +109,7 @@ static void handle_options(int argc, char** argv)
 			debug_set_use_color(stderr_target, 0);
 			break;
 		case 'd':
-			debug_set_category_mask(stderr_target,
-					     debug_parse_category_mask(optarg));
+			debug_parse_category_mask(stderr_target, optarg);
 			break;
 		case 'l':
 			database_name = strdup(optarg);
