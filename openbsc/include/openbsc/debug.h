@@ -70,7 +70,6 @@ enum {
 };
 
 struct debug_target {
-	char *filter;
 	int filter_map;
 	char *imsi_filter;
 
