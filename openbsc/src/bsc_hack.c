@@ -122,7 +122,7 @@ static void handle_options(int argc, char** argv)
 			create_pcap_file(optarg);
 			break;
 		case 'T':
-			debug_timestamp(1);
+			debug_set_print_timestamp(stderr_target, 1);
 			break;
 		case 'P':
 			ipacc_rtp_direct = 0;

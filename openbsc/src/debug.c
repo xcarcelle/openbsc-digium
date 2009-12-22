@@ -76,14 +76,6 @@ static const struct debug_info debug_info[] = {
 	DEBUG_CATEGORY(DHO, "DHO", "", "")
 };
 
-static int print_timestamp = 0;
-
-void debug_timestamp(int enable)
-{
-	print_timestamp = enable;
-}
-
-
 /*
  * Parse the category mask.
  * category1:category2:category3
@@ -141,7 +133,7 @@ static void _output(struct debug_target *target, unsigned int subsys, char *file
 	vsnprintf(buf, sizeof(buf), format, ap);
 
 	if (!cont) {
-		if (print_timestamp) {
+		if (target->print_timestamp) {
 			char *timestr;
 			time_t tm;
 			tm = time(NULL);
@@ -293,6 +285,11 @@ void debug_set_use_color(struct debug_target *target, int use_color)
 	target->use_color = use_color;
 }
 
+void debug_set_print_timestamp(struct debug_target *target, int print_timestamp)
+{
+	target->print_timestamp = print_timestamp;
+}
+
 static void _stderr_output(struct debug_target *target, const char *log)
 {
 	fprintf(target->tgt_stdout.out, "%s", log);
@@ -310,6 +307,7 @@ struct debug_target *debug_target_create(void)
 	INIT_LLIST_HEAD(&target->entry);
 	target->debug_mask = default_mask;
 	target->use_color = 1;
+	target->print_timestamp = 0;
 	return target;
 }
 

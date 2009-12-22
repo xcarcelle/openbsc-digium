@@ -44,7 +44,6 @@
 char *hexdump(const unsigned char *buf, int len);
 void debugp(unsigned int subsys, char *file, int line, int cont, const char *format, ...) __attribute__ ((format (printf, 5, 6)));
 unsigned int debug_parse_category_mask(const char* mask);
-void debug_timestamp(int enable);
 
 /* new logging interface */
 #define LOGP(ss, level, fmt, args...) debugp2(ss, level, __FILE__, __LINE__, 0, fmt, ##args)
@@ -80,6 +79,7 @@ struct debug_target {
 	int categories;
 	unsigned int debug_mask;
 	int use_color;
+	int print_timestamp;
 
 	union {
 		struct {
@@ -114,6 +114,7 @@ void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
 void debug_set_debug_mask(struct debug_target *target, unsigned int);
 void debug_set_use_color(struct debug_target *target, int);
+void debug_set_print_timestamp(struct debug_target *target, int);
 
 
 /* management of the targets */
