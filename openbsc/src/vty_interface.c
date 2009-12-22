@@ -839,6 +839,40 @@ DEFUN(logging_fltr_all,
 	return CMD_SUCCESS;
 }
 
+DEFUN(logging_use_clr,
+      logging_use_clr_cmd,
+      "logging use color <0-1>",
+      "Use color for printing messages\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_use_color(conn->dbg, atoi(argv[0]));
+	return CMD_SUCCESS;
+}
+
+DEFUN(logging_prnt_timestamp,
+      logging_prnt_timestamp_cmd,
+      "logging print timestamp <0-1>",
+      "Print the timestamp of each message\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_print_timestamp(conn->dbg, atoi(argv[0]));
+	return CMD_SUCCESS;
+}
+
 DEFUN(diable_logging,
       disable_logging_cmd,
       "logging disable",
@@ -1537,6 +1571,8 @@ int bsc_vty_init(struct gsm_network *net)
 	install_element(VIEW_NODE, &disable_logging_cmd);
 	install_element(VIEW_NODE, &logging_fltr_imsi_cmd);
 	install_element(VIEW_NODE, &logging_fltr_all_cmd);
+	install_element(VIEW_NODE, &logging_use_clr_cmd);
+	install_element(VIEW_NODE, &logging_prnt_timestamp_cmd);
 
 	install_element(CONFIG_NODE, &cfg_net_cmd);
 	install_node(&net_node, config_write_net);
