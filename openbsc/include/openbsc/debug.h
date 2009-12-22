@@ -113,6 +113,7 @@ void debug_set_all_filter(struct debug_target *target, int);
 void debug_set_category_mask(struct debug_target *target, unsigned int);
 void debug_set_use_color(struct debug_target *target, int);
 void debug_set_print_timestamp(struct debug_target *target, int);
+void debug_set_log_level(struct debug_target *target, int log_level);
 
 
 /* management of the targets */

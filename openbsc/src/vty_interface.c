@@ -873,6 +873,23 @@ DEFUN(logging_prnt_timestamp,
 	return CMD_SUCCESS;
 }
 
+DEFUN(logging_set_category_mask,
+      logging_set_category_mask_cmd,
+      "logging set debug mask MASK",
+      "Decide which categories to output.\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_category_mask(conn->dbg, debug_parse_category_mask(argv[0]));
+	return CMD_SUCCESS;
+}
+
 DEFUN(diable_logging,
       disable_logging_cmd,
       "logging disable",
@@ -1573,6 +1590,7 @@ int bsc_vty_init(struct gsm_network *net)
 	install_element(VIEW_NODE, &logging_fltr_all_cmd);
 	install_element(VIEW_NODE, &logging_use_clr_cmd);
 	install_element(VIEW_NODE, &logging_prnt_timestamp_cmd);
+	install_element(VIEW_NODE, &logging_set_category_mask_cmd);
 
 	install_element(CONFIG_NODE, &cfg_net_cmd);
 	install_node(&net_node, config_write_net);
