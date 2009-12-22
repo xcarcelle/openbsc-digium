@@ -76,13 +76,6 @@ static const struct debug_info debug_info[] = {
 	DEBUG_CATEGORY(DHO, "DHO", "", "")
 };
 
-static int use_color = 1;
-
-void debug_use_color(int color)
-{
-	use_color = color;
-}
-
 static int print_timestamp = 0;
 
 void debug_timestamp(int enable)
@@ -119,7 +112,7 @@ static const char* color(int subsys)
 {
 	int i = 0;
 
-	for (i = 0; use_color && i < ARRAY_SIZE(debug_info); ++i) {
+	for (i = 0; i < ARRAY_SIZE(debug_info); ++i) {
 		if (debug_info[i].number == subsys)
 			return debug_info[i].color;
 	}
@@ -127,10 +120,9 @@ static const char* color(int subsys)
 	return "";
 }
 
-static void _debugp(unsigned int subsys, int level, char *file, int line,
+static void _output(struct debug_target *target, unsigned int subsys, char *file, int line,
 		    int cont, const char *format, va_list ap)
 {
-	struct debug_target *tar;
 	char col[30];
 	char sub[30];
 	char tim[30];
@@ -138,11 +130,16 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	char final[4096];
 
 	/* prepare the data */
-	snprintf(col, sizeof(col), "%s", color(subsys));
+	col[0] = '\0';
+	sub[0] = '\0';
+	tim[0] = '\0';
+	buf[0] = '\0';
+
+	/* are we using color */
+	if (target->use_color)
+		snprintf(col, sizeof(col), "%s", color(subsys));
 	vsnprintf(buf, sizeof(buf), format, ap);
 
-	tim[0] = '\0';
-	sub[0] = '\0';
 	if (!cont) {
 		if (print_timestamp) {
 			char *timestr;
@@ -156,8 +153,18 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	}
 
 	snprintf(final, sizeof(final), "%s%s%s%s\033[0;m", col, tim, sub, buf);
+	target->output(target, final);
+}
+
+
+static void _debugp(unsigned int subsys, int level, char *file, int line,
+		    int cont, const char *format, va_list ap)
+{
+	struct debug_target *tar;
 
 	llist_for_each_entry(tar, &target_list, entry) {
+		int output = 0;
+
 		/* subsystem is not supposed to be debugged */
 		if (!(tar->debug_mask & subsys))
 			continue;
@@ -167,11 +174,14 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 		 * filters in a list and each filter will say stop, continue, output
 		 */
 		if ((tar->filter_map & DEBUG_FILTER_ALL) != 0) {
-			tar->output(tar, final);
+			output = 1;
 		} else if ((tar->filter_map & DEBUG_FILTER_IMSI) != 0
 			      && debug_context.subscr && strcmp(debug_context.subscr->imsi, tar->imsi_filter) == 0) {
-			tar->output(tar, final);
+			output = 1;
 		}
+
+		if (output)
+			_output(tar, subsys, file, line, cont, format, ap);
 	}
 }
 
@@ -278,6 +288,11 @@ void debug_set_debug_mask(struct debug_target *target, unsigned int mask)
 	target->debug_mask = mask;
 }
 
+void debug_set_use_color(struct debug_target *target, int use_color)
+{
+	target->use_color = use_color;
+}
+
 static void _stderr_output(struct debug_target *target, const char *log)
 {
 	fprintf(target->tgt_stdout.out, "%s", log);
@@ -294,6 +309,7 @@ struct debug_target *debug_target_create(void)
 
 	INIT_LLIST_HEAD(&target->entry);
 	target->debug_mask = default_mask;
+	target->use_color = 1;
 	return target;
 }
 

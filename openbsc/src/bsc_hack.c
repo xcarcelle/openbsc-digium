@@ -106,7 +106,7 @@ static void handle_options(int argc, char** argv)
 			print_help();
 			exit(0);
 		case 's':
-			debug_use_color(0);
+			debug_set_use_color(stderr_target, 0);
 			break;
 		case 'd':
 			debug_set_debug_mask(stderr_target,
