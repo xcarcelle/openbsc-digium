@@ -53,8 +53,6 @@ static LLIST_HEAD(target_list);
 #define DEBUG_CATEGORY(NUMBER, NAME, COLOR, DESCRIPTION) \
 	{ .name = NAME, .color = COLOR, .description = DESCRIPTION, .number = NUMBER },
 
-#define ARRAY_SIZE(array) (sizeof(array)/sizeof(array[0]))
-
 static const struct debug_info debug_info[] = {
 	DEBUG_CATEGORY(DRLL,  "DRLL", "\033[1;31m", "")
 	DEBUG_CATEGORY(DCC,   "DCC",  "\033[1;32m", "")
