@@ -251,10 +251,6 @@ void debug_set_context(int ctx, void *value)
 	}
 }
 
-void debug_set_filter(struct debug_target *target, const char *filter_string)
-{
-}
-
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi)
 {
 	if (imsi) {

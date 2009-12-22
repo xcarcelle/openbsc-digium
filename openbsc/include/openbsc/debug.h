@@ -109,7 +109,6 @@ void debug_reset_context(void);
 void debug_set_context(int ctx, void *value);
 
 /* filter on the targets */
-void debug_set_filter(struct debug_target *target, const char *filter_string);
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
 void debug_set_debug_mask(struct debug_target *target, unsigned int);
