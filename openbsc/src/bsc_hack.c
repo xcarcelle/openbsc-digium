@@ -109,7 +109,7 @@ static void handle_options(int argc, char** argv)
 			debug_set_use_color(stderr_target, 0);
 			break;
 		case 'd':
-			debug_set_debug_mask(stderr_target,
+			debug_set_category_mask(stderr_target,
 					     debug_parse_category_mask(optarg));
 			break;
 		case 'l':

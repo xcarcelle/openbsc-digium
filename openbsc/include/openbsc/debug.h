@@ -76,7 +76,7 @@ struct debug_target {
 
 	/* TODO: some multidimensional field of values */
 	int categories;
-	unsigned int debug_mask;
+	unsigned int category_mask;
 	int use_color;
 	int print_timestamp;
 
@@ -110,7 +110,7 @@ void debug_set_context(int ctx, void *value);
 /* filter on the targets */
 void debug_set_imsi_filter(struct debug_target *target, const char *imsi);
 void debug_set_all_filter(struct debug_target *target, int);
-void debug_set_debug_mask(struct debug_target *target, unsigned int);
+void debug_set_category_mask(struct debug_target *target, unsigned int);
 void debug_set_use_color(struct debug_target *target, int);
 void debug_set_print_timestamp(struct debug_target *target, int);
 

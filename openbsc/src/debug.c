@@ -156,7 +156,7 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 		int output = 0;
 
 		/* subsystem is not supposed to be debugged */
-		if (!(tar->debug_mask & subsys))
+		if (!(tar->category_mask & subsys))
 			continue;
 
 		/*
@@ -269,9 +269,9 @@ void debug_set_all_filter(struct debug_target *target, int all)
 		target->filter_map &= ~DEBUG_FILTER_ALL;
 }
 
-void debug_set_debug_mask(struct debug_target *target, unsigned int mask)
+void debug_set_category_mask(struct debug_target *target, unsigned int mask)
 {
-	target->debug_mask = mask;
+	target->category_mask = mask;
 }
 
 void debug_set_use_color(struct debug_target *target, int use_color)
@@ -299,7 +299,7 @@ struct debug_target *debug_target_create(void)
 		return NULL;
 
 	INIT_LLIST_HEAD(&target->entry);
-	target->debug_mask = default_mask;
+	target->category_mask = default_mask;
 	target->use_color = 1;
 	target->print_timestamp = 0;
 	return target;
