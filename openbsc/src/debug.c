@@ -31,7 +31,7 @@
 #include <openbsc/gsm_data.h>
 #include <openbsc/gsm_subscriber.h>
 
-static unsigned int debug_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
+static unsigned int default_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
 
 struct debug_info {
 	const char *name;
@@ -137,9 +137,6 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	char buf[4096];
 	char final[4096];
 
-	if (!(debug_mask & subsys))
-		return;
-
 	/* prepare the data */
 	snprintf(col, sizeof(col), "%s", color(subsys));
 	vsnprintf(buf, sizeof(buf), format, ap);
@@ -161,6 +158,10 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 	snprintf(final, sizeof(final), "%s%s%s%s\033[0;m", col, tim, sub, buf);
 
 	llist_for_each_entry(tar, &target_list, entry) {
+		/* subsystem is not supposed to be debugged */
+		if (!(tar->debug_mask & subsys))
+			continue;
+
 		/*
 		 * Apply filters here... if that becomes messy we will need to put
 		 * filters in a list and each filter will say stop, continue, output
@@ -292,7 +293,7 @@ struct debug_target *debug_target_create(void)
 		return NULL;
 
 	INIT_LLIST_HEAD(&target->entry);
-	target->debug_mask = debug_mask;
+	target->debug_mask = default_mask;
 	return target;
 }
 
