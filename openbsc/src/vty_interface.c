@@ -890,6 +890,23 @@ DEFUN(logging_set_category_mask,
 	return CMD_SUCCESS;
 }
 
+DEFUN(logging_set_log_level,
+      logging_set_log_level_cmd,
+      "logging set log level <0-8>",
+      "Set the global log level. The value 0 implies no filtering.\n")
+{
+	struct telnet_connection *conn;
+
+	conn = (struct telnet_connection *) vty->priv;
+	if (!conn->dbg) {
+		vty_out(vty, "Logging was not enabled.%s", VTY_NEWLINE);
+		return CMD_WARNING;
+	}
+
+	debug_set_log_level(conn->dbg, atoi(argv[0]));
+	return CMD_SUCCESS;
+}
+
 DEFUN(diable_logging,
       disable_logging_cmd,
       "logging disable",

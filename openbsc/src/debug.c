@@ -159,6 +159,10 @@ static void _debugp(unsigned int subsys, int level, char *file, int line,
 		if (!(tar->category_mask & subsys))
 			continue;
 
+		/* The message is not critical enough */
+		if (tar->loglevel != 0 && level < tar->loglevel)
+			continue;
+
 		/*
 		 * Apply filters here... if that becomes messy we will need to put
 		 * filters in a list and each filter will say stop, continue, output
@@ -284,6 +288,11 @@ void debug_set_print_timestamp(struct debug_target *target, int print_timestamp)
 	target->print_timestamp = print_timestamp;
 }
 
+void debug_set_log_level(struct debug_target *target, int log_level)
+{
+	target->loglevel = log_level;
+}
+
 static void _stderr_output(struct debug_target *target, const char *log)
 {
 	fprintf(target->tgt_stdout.out, "%s", log);
@@ -302,6 +311,7 @@ struct debug_target *debug_target_create(void)
 	target->category_mask = default_mask;
 	target->use_color = 1;
 	target->print_timestamp = 0;
+	target->loglevel = 0;
 	return target;
 }
 

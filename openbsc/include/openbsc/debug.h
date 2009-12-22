@@ -79,6 +79,7 @@ struct debug_target {
 	unsigned int category_mask;
 	int use_color;
 	int print_timestamp;
+	int loglevel;
 
 	union {
 		struct {
