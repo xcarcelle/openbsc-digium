@@ -31,7 +31,7 @@
 #include <openbsc/gsm_data.h>
 #include <openbsc/gsm_subscriber.h>
 
-unsigned int debug_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
+static unsigned int debug_mask = 0xffffffff & ~(DMI|DMIB|DMEAS);
 
 struct debug_info {
 	const char *name;
