@@ -50,6 +50,7 @@
 #include <openbsc/talloc.h>
 #include <openbsc/transaction.h>
 #include <openbsc/ussd.h>
+#include <openbsc/silent_call.h>
 
 #define GSM_MAX_FACILITY       128
 #define GSM_MAX_SSVERSION      128
@@ -827,9 +828,12 @@ int gsm0408_loc_upd_rej(struct gsm_lchan *lchan, u_int8_t cause)
 	gh->msg_type = GSM48_MT_MM_LOC_UPD_REJECT;
 	gh->data[0] = cause;
 
-	DEBUGP(DMM, "-> LOCATION UPDATING REJECT on channel: %d\n", lchan->nr);
+	LOGP(DMM, LOGL_INFO, "Subscriber %s: LOCATION UPDATING REJECT "
+	     "LAC=%u BTS=%u\n", lchan->subscr ?
+	     			subscr_name(lchan->subscr) : "unknown",
+	     lchan->ts->trx->bts->location_area_code, lchan->ts->trx->bts->nr);
 
-	bts->network->stats.loc_upd_resp.reject++;
+	counter_inc(bts->network->stats.loc_upd_resp.reject);
 	
 	return gsm48_sendmsg(msg, NULL);
 }
@@ -858,7 +862,7 @@ int gsm0408_loc_upd_acc(struct gsm_lchan *lchan, u_int32_t tmsi)
 
 	DEBUGP(DMM, "-> LOCATION UPDATE ACCEPT\n");
 
-	bts->network->stats.loc_upd_resp.accept++;
+	counter_inc(bts->network->stats.loc_upd_resp.accept);
 
 	return gsm48_sendmsg(msg, NULL);
 }
@@ -979,13 +983,13 @@ static int mm_rx_loc_upd_req(struct msgb *msg)
 
 	switch (lu->type) {
 	case GSM48_LUPD_NORMAL:
-		bts->network->stats.loc_upd_type.normal++;
+		counter_inc(bts->network->stats.loc_upd_type.normal);
 		break;
 	case GSM48_LUPD_IMSI_ATT:
-		bts->network->stats.loc_upd_type.attach++;
+		counter_inc(bts->network->stats.loc_upd_type.attach);
 		break;
 	case GSM48_LUPD_PERIODIC:
-		bts->network->stats.loc_upd_type.periodic++;
+		counter_inc(bts->network->stats.loc_upd_type.periodic);
 		break;
 	}
 
@@ -1168,20 +1172,19 @@ int gsm48_tx_mm_info(struct gsm_lchan *lchan)
 }
 
 /* Section 9.2.2 */
-int gsm48_tx_mm_auth_req(struct gsm_lchan *lchan, u_int8_t *rand)
+int gsm48_tx_mm_auth_req(struct gsm_lchan *lchan, u_int8_t *rand, int key_seq)
 {
 	struct msgb *msg = gsm48_msgb_alloc();
 	struct gsm48_hdr *gh = (struct gsm48_hdr *) msgb_put(msg, sizeof(*gh));
 	struct gsm48_auth_req *ar = (struct gsm48_auth_req *) msgb_put(msg, sizeof(*ar));
 
-	DEBUGP(DMM, "-> AUTH REQ\n");
+	DEBUGP(DMM, "-> AUTH REQ (rand = %s)\n", hexdump(rand, 16));
 
 	msg->lchan = lchan;
 	gh->proto_discr = GSM48_PDISC_MM;
 	gh->msg_type = GSM48_MT_MM_AUTH_REQ;
 
-	/* Key Sequence: FIXME fixed to 0 */
-	ar->key_seq = 0;
+	ar->key_seq = key_seq;
 
 	/* 16 bytes RAND parameters */
 	if (rand)
@@ -1315,7 +1318,7 @@ static int gsm48_rx_mm_imsi_detach_ind(struct msgb *msg)
 	DEBUGP(DMM, "IMSI DETACH INDICATION: mi_type=0x%02x MI(%s): ",
 		mi_type, mi_string);
 
-	bts->network->stats.loc_upd_type.detach++;
+	counter_inc(bts->network->stats.loc_upd_type.detach);
 
 	switch (mi_type) {
 	case GSM_MI_TYPE_TMSI:
@@ -1338,8 +1341,7 @@ static int gsm48_rx_mm_imsi_detach_ind(struct msgb *msg)
 	if (subscr) {
 		subscr_update(subscr, msg->trx->bts,
 				GSM_SUBSCRIBER_UPDATE_DETACHED);
-		DEBUGP(DMM, "Subscriber: %s\n",
-		       subscr->name ? subscr->name : subscr->imsi);
+		DEBUGP(DMM, "Subscriber: %s\n", subscr_name(subscr));
 
 		subscr->equipment.classmark1 = idi->classmark1;
 		db_sync_equipment(&subscr->equipment);
@@ -1387,7 +1389,7 @@ static int gsm0408_rcv_mm(struct msgb *msg)
 	case GSM48_MT_MM_TMSI_REALL_COMPL:
 		DEBUGP(DMM, "TMSI Reallocation Completed. Subscriber: %s\n",
 		       msg->lchan->subscr ?
-				msg->lchan->subscr->imsi :
+				subscr_name(msg->lchan->subscr) :
 				"unknown subscriber");
 		break;
 	case GSM48_MT_MM_IMSI_DETACH_IND:
@@ -1400,7 +1402,7 @@ static int gsm0408_rcv_mm(struct msgb *msg)
 		DEBUGP(DMM, "AUTHENTICATION RESPONSE: Not implemented\n");
 		break;
 	default:
-		fprintf(stderr, "Unknown GSM 04.08 MM msg type 0x%02x\n",
+		LOGP(DMM, LOGL_NOTICE, "Unknown GSM 04.08 MM msg type 0x%02x\n",
 			gh->msg_type);
 		break;
 	}
@@ -1603,8 +1605,8 @@ static int gsm0408_rcv_rr(struct msgb *msg)
 		rc = gsm48_rx_rr_ho_fail(msg);
 		break;
 	default:
-		fprintf(stderr, "Unimplemented GSM 04.08 RR msg type 0x%02x\n",
-			gh->msg_type);
+		LOGP(DRR, LOGL_NOTICE, "Unimplemented "
+			"GSM 04.08 RR msg type 0x%02x\n", gh->msg_type);
 		break;
 	}
 
@@ -2142,6 +2144,10 @@ static int gsm48_cc_rx_setup(struct gsm_trans *trans, struct msgb *msg)
 	}
 
 	new_cc_state(trans, GSM_CSTATE_INITIATED);
+
+	LOGP(DCC, LOGL_INFO, "Subscriber %s (%s) sends SETUP to %s\n",
+	     subscr_name(trans->subscr), trans->subscr->extension,
+	     setup.called.number);
 
 	/* indicate setup to MNCC */
 	mncc_recvmsg(trans->subscr->net, trans, MNCC_SETUP_IND, &setup);
@@ -3488,6 +3494,9 @@ int gsm0408_rcvmsg(struct msgb *msg, u_int8_t link_id)
 	struct gsm48_hdr *gh = msgb_l3(msg);
 	u_int8_t pdisc = gh->proto_discr & 0x0f;
 	int rc = 0;
+
+	if (silent_call_reroute(msg))
+		return silent_call_rx(msg);
 	
 	switch (pdisc) {
 	case GSM48_PDISC_CC:
@@ -3504,15 +3513,15 @@ int gsm0408_rcvmsg(struct msgb *msg, u_int8_t link_id)
 		break;
 	case GSM48_PDISC_MM_GPRS:
 	case GSM48_PDISC_SM_GPRS:
-		fprintf(stderr, "Unimplemented GSM 04.08 discriminator 0x%02x\n",
-			pdisc);
+		LOGP(DRLL, LOGL_NOTICE, "Unimplemented "
+			"GSM 04.08 discriminator 0x%02x\n", pdisc);
 		break;
 	case GSM48_PDISC_NC_SS:
 		rc = handle_rcv_ussd(msg);
 		break;
 	default:
-		fprintf(stderr, "Unknown GSM 04.08 discriminator 0x%02x\n",
-			pdisc);
+		LOGP(DRLL, LOGL_NOTICE, "Unknown "
+			"GSM 04.08 discriminator 0x%02x\n", pdisc);
 		break;
 	}
 

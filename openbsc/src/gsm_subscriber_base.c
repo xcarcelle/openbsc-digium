@@ -139,7 +139,7 @@ static void subscr_free(struct gsm_subscriber *subscr)
 struct gsm_subscriber *subscr_get(struct gsm_subscriber *subscr)
 {
 	subscr->use_count++;
-	DEBUGP(DCC, "subscr %s usage increases usage to: %d\n",
+	DEBUGP(DREF, "subscr %s usage increases usage to: %d\n",
 			subscr->extension, subscr->use_count);
 	return subscr;
 }
@@ -147,7 +147,7 @@ struct gsm_subscriber *subscr_get(struct gsm_subscriber *subscr)
 struct gsm_subscriber *subscr_put(struct gsm_subscriber *subscr)
 {
 	subscr->use_count--;
-	DEBUGP(DCC, "subscr %s usage decreased usage to: %d\n",
+	DEBUGP(DREF, "subscr %s usage decreased usage to: %d\n",
 			subscr->extension, subscr->use_count);
 	if (subscr->use_count <= 0)
 		subscr_free(subscr);

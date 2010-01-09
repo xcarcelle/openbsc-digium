@@ -52,6 +52,7 @@
 #define SCCP_IT_TIMER 60
 
 /* MCC and MNC for the Location Area Identifier */
+static struct debug_target *stderr_target;
 struct gsm_network *bsc_gsmnet = 0;
 static const char *config_file = "openbsc.cfg";
 static char *msc_address = "127.0.0.1";
@@ -688,16 +689,16 @@ static void handle_options(int argc, char** argv)
 			print_help();
 			exit(0);
 		case 's':
-			debug_use_color(0);
+			debug_set_use_color(stderr_target, 0);
 			break;
 		case 'd':
-			debug_parse_category_mask(optarg);
+			debug_parse_category_mask(stderr_target, optarg);
 			break;
 		case 'c':
 			config_file = strdup(optarg);
 			break;
 		case 'T':
-			debug_timestamp(1);
+			debug_set_print_timestamp(stderr_target, 1);
 			break;
 		case 'P':
 			ipacc_rtp_direct = 0;
@@ -780,9 +781,12 @@ int main(int argc, char **argv)
 {
 	int rc;
 
+	debug_init();
 	tall_bsc_ctx = talloc_named_const(NULL, 1, "openbsc");
 
 	/* parse options */
+	stderr_target = debug_target_create_stderr();
+	debug_add_target(stderr_target);
 	handle_options(argc, argv);
 
 	/* seed the PRNG */
