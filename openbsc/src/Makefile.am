@@ -36,7 +36,7 @@ bs11_config_SOURCES = bs11_config.c abis_nm.c gsm_data.c debug.c \
 
 ipaccess_find_SOURCES = ipaccess/ipaccess-find.c
 
-ipaccess_config_SOURCES = ipaccess/ipaccess-config.c ipaccess/ipaccess-firmware.c
+ipaccess_config_SOURCES = ipaccess/ipaccess-config.c ipaccess/ipaccess-firmware.c ipaccess/network_listen.c
 ipaccess_config_LDADD = libbsc.a libmsc.a libbsc.a libvty.a -ldl -ldbi $(LIBCRYPT)
 
 isdnsync_SOURCES = isdnsync.c

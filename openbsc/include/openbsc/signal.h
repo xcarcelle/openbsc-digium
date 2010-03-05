@@ -42,6 +42,7 @@ enum signal_subsystems {
 	SS_SUBSCR,
 	SS_SCALL,
 	SS_GLOBAL,
+	SS_IPAC_NWL,
 };
 
 /* SS_PAGING signals */
@@ -105,6 +106,11 @@ enum signal_scall {
 	S_SCALL_SUCCESS,
 	S_SCALL_EXPIRED,
 	S_SCALL_DETACHED,
+};
+
+/* SS_IPAC_NWL signals */
+enum signal_ipaccess {
+	S_IPAC_NWL_COMPLETE,
 };
 
 enum signal_global {
