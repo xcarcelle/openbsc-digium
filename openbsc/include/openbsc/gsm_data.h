@@ -44,11 +44,13 @@ enum gsm_chreq_reason_t {
 #include <openbsc/gsm_04_08.h>
 #include <openbsc/abis_rsl.h>
 #include <openbsc/mncc.h>
+
 #include <osmocore/tlv.h>
 #include <osmocore/bitvec.h>
 #include <osmocore/statistics.h>
 #include <osmocore/gsm_utils.h>
 #include <osmocore/utils.h>
+#include <osmocore/rxlev_stat.h>
 
 #define TRX_NR_TS	8
 #define TS_MAX_LCHAN	8
@@ -311,6 +313,7 @@ struct gsm_bts_trx {
 		} bs11;
 		struct {
 			unsigned int test_state;
+			struct rxlev_stats rxlev_stat;
 		} ipaccess;
 	};
 	struct gsm_bts_trx_ts ts[TRX_NR_TS];
